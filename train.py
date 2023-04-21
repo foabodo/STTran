@@ -150,11 +150,11 @@ for epoch in range(conf.nepoch):
         print(f"Fetching train data {b}")
         data = next(train_iter)
 
-        im_data = copy.deepcopy(data[0])#.to(object_detector_device))
-        im_info = copy.deepcopy(data[1])#.to(object_detector_device))
-        gt_boxes = copy.deepcopy(data[2])#.to(object_detector_device))
-        num_boxes = copy.deepcopy(data[3])#.to(object_detector_device))
-        gt_annotation = dataset_train.gt_annotations[data[4]]
+        im_data = copy.deepcopy(data[0]).to(object_detector_device)
+        im_info = copy.deepcopy(data[1]).to(object_detector_device)
+        gt_boxes = copy.deepcopy(data[2]).to(object_detector_device)
+        num_boxes = copy.deepcopy(data[3]).to(object_detector_device)
+        gt_annotation = dataset_train.gt_annotations[data[4]].to(object_detector_device)
 
         # prevent gradients to FasterRCNN
         with torch.no_grad():
