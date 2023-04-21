@@ -62,8 +62,8 @@ dataloader_test = torch.utils.data.DataLoader(
     pin_memory=False)
 
 cpu_device = torch.device("cpu")
-sttran_device = torch.device("cuda:1")
-object_detector_device = torch.device("cuda:0")
+sttran_device = torch.device("cuda:0")
+object_detector_device = torch.device("cuda:1")
 # freeze the detection backbone
 
 # Prepare a partial mapping
