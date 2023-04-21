@@ -87,7 +87,7 @@ object_detector = detector(
     ignore_missing_keys=True,
     device=object_detector_device,
     batch_size=5
-).to(device=object_detector_device)
+)#.to(device=object_detector_device)
 
 object_detector.eval()
 
