@@ -8,7 +8,7 @@ target_relationship_classes: ['add_into', 'add_to', 'adjust_in', 'adjust_on', 'a
 enc_layer: 1
 dec_layer: 3
 iou_threshold: 0.5
-constraint: 'with'  # with/semi/no
+constraint: 'semi'  # with/semi/no
 semithreshold: 0.9
 
 batch_size: 10
@@ -18,14 +18,9 @@ frame_resize_width: 480
 frame_resize_height: 360
 fps: 5
 
-#word_vec_dir: "/home/model-server/STTran/data"
-#input_dir: "/home/model-server/input"
-#output_dir: "/home/model-server/output"
-#cache_dir: "/home/model-server/cache"
-
 data_path: ""
 word_vec_dim: 200
-word_vec_dir: "/home/uadmin/PycharmProjects/KMASS/KitchenGenome/STTran/data"
-input_dir: "/home/uadmin/PycharmProjects/KMASS/KitchenGenome/STTran/input"
-output_dir: "/home/uadmin/PycharmProjects/KMASS/KitchenGenome/STTran/output"
-cache_dir: "/home/uadmin/PycharmProjects/KMASS/KitchenGenome/STTran/cache"
+word_vec_dir: "/proj/kmass/faa0550/projects/KitchenGenome/STTran/data"
+input_dir: "/proj/kmass/faa0550/projects/KitchenGenome/STTran/input"
+output_dir: "/proj/kmass/faa0550/projects/KitchenGenome/STTran/output"
+cache_dir: "/proj/kmass/faa0550/projects/KitchenGenome/STTran/cache"
