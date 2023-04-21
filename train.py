@@ -47,8 +47,9 @@ dataloader_train = torch.utils.data.DataLoader(
     dataset_train, 
     shuffle=True, 
     num_workers=1,
-    collate_fn=cuda_collate_fn, 
-    pin_memory=False)
+    collate_fn=cuda_collate_fn,
+    pin_memory=True,
+    pin_memory_device="cuda:0")
 
 dataset_test = Dataset(
     mode="test",
@@ -63,11 +64,12 @@ dataloader_test = torch.utils.data.DataLoader(
     shuffle=False,
     num_workers=1,
     collate_fn=cuda_collate_fn,
-    pin_memory=False)
+    pin_memory=True,
+    pin_memory_device="cuda:0")
 
 cpu_device = torch.device("cpu")
-sttran_device = torch.device("cuda:0")
-object_detector_device = torch.device("cuda:1")
+sttran_device = torch.device("cuda:1")
+object_detector_device = torch.device("cuda:0")
 # freeze the detection backbone
 
 # Prepare a partial mapping
@@ -149,10 +151,10 @@ for epoch in range(conf.nepoch):
         print(f"Fetching train data {b}")
         data = next(train_iter)
 
-        im_data = copy.deepcopy(data[0].to(object_detector_device))
-        im_info = copy.deepcopy(data[1].to(object_detector_device))
-        gt_boxes = copy.deepcopy(data[2].to(object_detector_device))
-        num_boxes = copy.deepcopy(data[3].to(object_detector_device))
+        im_data = copy.deepcopy(data[0])#.to(object_detector_device))
+        im_info = copy.deepcopy(data[1])#.to(object_detector_device))
+        gt_boxes = copy.deepcopy(data[2])#.to(object_detector_device))
+        num_boxes = copy.deepcopy(data[3])#.to(object_detector_device))
         gt_annotation = dataset_train.gt_annotations[data[4]]
 
         # prevent gradients to FasterRCNN
