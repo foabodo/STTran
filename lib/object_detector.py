@@ -376,6 +376,7 @@ class detector(nn.Module):
             # FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
+            FINAL_BBOXES = FINAL_BBOXES.to(self.faster_rcnn_device)
 
             print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}, {FINAL_BASE_FEATURES.device}")
             print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}, {FINAL_BBOXES.device}")
