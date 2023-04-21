@@ -54,6 +54,8 @@ class detector(nn.Module):
                 strict=not ignore_missing_keys
             )
 
+        self.fasterRCNN = self.fasterRCNN.to(self.device)
+
         self.ROI_Align = copy.deepcopy(self.fasterRCNN.RCNN_roi_align)
         self.RCNN_Head = copy.deepcopy(self.fasterRCNN._head_to_tail)
 
