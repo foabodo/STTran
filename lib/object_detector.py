@@ -364,8 +364,8 @@ class detector(nn.Module):
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
 
-            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
-            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
+            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}, {FINAL_BASE_FEATURES.device}")
+            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}, {FINAL_BBOXES.device}")
 
             FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
