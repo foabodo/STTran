@@ -18,6 +18,7 @@ from lib.evaluation_recall import BasicSceneGraphEvaluator
 from lib.AdamW import AdamW
 from lib.sttran import STTran
 
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 
