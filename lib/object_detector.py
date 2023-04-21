@@ -33,6 +33,7 @@ class detector(nn.Module):
         self.mode = mode
         self.device = torch.device("cuda:0") if device is None else device
         self.batch_size = batch_size
+        self.faster_rcnn_device = torch.device("cuda:2")
 
         self.fasterRCNN = resnet(
             classes=self.object_classes,
@@ -55,6 +56,8 @@ class detector(nn.Module):
 
         self.ROI_Align = copy.deepcopy(self.fasterRCNN.RCNN_roi_align)
         self.RCNN_Head = copy.deepcopy(self.fasterRCNN._head_to_tail)
+
+        self.fasterRCNN.to(self.faster_rcnn_device)
 
     def forward(self,
                 im_data,
@@ -102,25 +105,31 @@ class detector(nn.Module):
                         inputs_gtboxes = gt_boxes[counter:]
                         inputs_numboxes = num_boxes[counter:]
 
-                output_list = [self.fasterRCNN(
-                    inputs_data[i], inputs_info[i], inputs_gtboxes[i], inputs_numboxes[i]
-                ) for i in range(self.batch_size)]
+                # output_list = [self.fasterRCNN(
+                #     inputs_data[i].to(self.faster_rcnn_device),
+                #     inputs_info[i].to(self.faster_rcnn_device),
+                #     inputs_gtboxes[i].to(self.faster_rcnn_device),
+                #     inputs_numboxes[i].to(self.faster_rcnn_device)
+                # ) for i in range(self.batch_size)]
+                #
+                # rois = torch.tensor([output[0] for output in output_list]).to(self.device)
+                # cls_prob = torch.tensor([output[1] for output in output_list]).to(self.device)
+                # bbox_pred = torch.tensor([output[2] for output in output_list]).to(self.device)
+                # base_feat = torch.tensor([output[3] for output in output_list]).to(self.device)
+                # roi_features = torch.tensor([output[4] for output in output_list]).to(self.device)
+                #
+                # for output in output_list:
+                #     for tensor in output:
+                #         tensor.to(cpu_device)
+                #
+                #         del tensor
+                #
+                # del output_list
+                #
+                # torch.cuda.empty_cache()
 
-                rois = torch.tensor([output[0] for output in output_list]).to(self.device)
-                cls_prob = torch.tensor([output[1] for output in output_list]).to(self.device)
-                bbox_pred = torch.tensor([output[2] for output in output_list]).to(self.device)
-                base_feat = torch.tensor([output[3] for output in output_list]).to(self.device)
-                roi_features = torch.tensor([output[4] for output in output_list]).to(self.device)
-
-                for output in output_list:
-                    for tensor in output:
-                        tensor.to(cpu_device)
-
-                        del tensor
-
-                del output_list
-
-                torch.cuda.empty_cache()
+                rois, cls_prob, bbox_pred, base_feat, roi_features = self.fasterRCNN(
+                    inputs_data, inputs_info, inputs_gtboxes, inputs_numboxes)
 
                 SCORES = cls_prob.data
                 boxes = rois.data[:, :, 1:5]
@@ -183,7 +192,8 @@ class detector(nn.Module):
                 prediction = {'FINAL_BBOXES': FINAL_BBOXES, 'FINAL_LABELS': FINAL_LABELS, 'FINAL_SCORES': FINAL_SCORES,
                               'FINAL_FEATURES': FINAL_FEATURES, 'FINAL_BASE_FEATURES': FINAL_BASE_FEATURES}
 
-                DETECTOR_FOUND_IDX, GT_RELATIONS, SUPPLY_RELATIONS, assigned_labels = assign_relations(prediction, gt_annotation, assign_IOU_threshold=0.5)
+                DETECTOR_FOUND_IDX, GT_RELATIONS, SUPPLY_RELATIONS, assigned_labels = assign_relations(
+                    prediction, gt_annotation, assign_IOU_threshold=0.5)
 
                 if self.use_SUPPLY:
                     # supply the unfounded gt boxes by detector into the scene graph generation training
@@ -346,7 +356,7 @@ class detector(nn.Module):
             im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
 
             counter = 0
-            FINAL_BASE_FEATURES = torch.tensor([]).to(cpu_device)
+            FINAL_BASE_FEATURES = torch.tensor([]).to(self.device)
             # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             while counter < im_data.shape[0]:
@@ -356,14 +366,14 @@ class detector(nn.Module):
                 else:
                     inputs_data = im_data[counter:]
                 # print(f"RCNN_base_inputs_data: {inputs_data.size()}")
-                base_feat = self.fasterRCNN.RCNN_base(inputs_data)
+                base_feat = self.fasterRCNN.RCNN_base(inputs_data.to(self.faster_rcnn_device)).to(self.device)
                 # print(f"RCNN_base_feat: {base_feat.size()}")
-                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat.to(cpu_device)), 0)
+                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
                 # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
                 counter += self.batch_size
 
-            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}, {FINAL_BASE_FEATURES.device}")
-            FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
+            # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}, {FINAL_BASE_FEATURES.device}")
+            # FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
 
