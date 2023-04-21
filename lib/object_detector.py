@@ -366,9 +366,9 @@ class detector(nn.Module):
                 else:
                     inputs_data = im_data[counter:]
                 # print(f"RCNN_base_inputs_data: {inputs_data.size()}")
-                base_feat = self.fasterRCNN.RCNN_base(inputs_data.to(self.faster_rcnn_device)).to(self.device)
+                base_feat = self.fasterRCNN.RCNN_base(inputs_data.to(self.faster_rcnn_device))
                 # print(f"RCNN_base_feat: {base_feat.size()}")
-                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
+                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat.to(self.device)), 0)
                 # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
                 counter += self.batch_size
 
