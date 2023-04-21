@@ -8,6 +8,7 @@ import time
 import os
 import pandas as pd
 import copy
+import yaml
 
 # from dataloader.action_genome import ActionGenome as Dataset, cuda_collate_fn
 from dataloader.kitchen_genome import KitchenGenome as Dataset, cuda_collate_fn
@@ -29,6 +30,9 @@ print('spatial encoder layer num: {} / temporal decoder layer num: {}'.format(co
 for i in conf.args:
     print(i,':', conf.args[i])
 """-----------------------------------------------------------------------------------------"""
+
+with open(conf.config_path) as config_file:
+    yaml_config = yaml.load(config_file, yaml.SafeLoader)
 
 dataset_train = Dataset(
     mode="train", 
@@ -98,8 +102,8 @@ model = STTran(
     obj_classes=dataset_train.object_classes,
     enc_layer_num=conf.enc_layer,
     dec_layer_num=conf.dec_layer,
-    word_vec_dir=conf.word_vec_dir,
-    word_vec_dim=conf.word_vec_dim
+    word_vec_dir=yaml_config["word_vec_dir"],
+    word_vec_dim=yaml_config["word_vec_dim"]
 ).to(device=sttran_device)
 
 evaluator = BasicSceneGraphEvaluator(
@@ -109,7 +113,7 @@ evaluator = BasicSceneGraphEvaluator(
     source_predicates=dataset_train.source_relationships,
     target_predicates=dataset_train.target_relationships,
     iou_threshold=0.5,
-    constraint=conf.constraint
+    constraint=yaml_config["constraint"]
 )
 
 # loss function, default Multi-label margin loss
