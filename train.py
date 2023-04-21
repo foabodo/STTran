@@ -18,7 +18,7 @@ from lib.evaluation_recall import BasicSceneGraphEvaluator
 from lib.AdamW import AdamW
 from lib.sttran import STTran
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 
 """------------------------------------some settings----------------------------------------"""
@@ -66,8 +66,8 @@ dataloader_test = torch.utils.data.DataLoader(
     pin_memory=False)
 
 cpu_device = torch.device("cpu")
-sttran_device = torch.device("cuda:1")
-object_detector_device = torch.device("cuda:0")
+sttran_device = torch.device("cuda:0")
+object_detector_device = torch.device("cuda:1")
 # freeze the detection backbone
 
 # Prepare a partial mapping
