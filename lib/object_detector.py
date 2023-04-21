@@ -33,7 +33,7 @@ class detector(nn.Module):
         self.mode = mode
         self.device = torch.device("cuda:0") if device is None else device
         self.batch_size = batch_size
-        self.faster_rcnn_device = torch.device("cuda:2")
+        self.faster_rcnn_device = torch.device("cpu")
 
         self.fasterRCNN = resnet(
             classes=self.object_classes,
