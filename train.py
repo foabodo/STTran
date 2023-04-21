@@ -9,12 +9,16 @@ import os
 import pandas as pd
 import copy
 
-from dataloader.action_genome import AG, cuda_collate_fn
+# from dataloader.action_genome import ActionGenome as Dataset, cuda_collate_fn
+from dataloader.kitchen_genome import KitchenGenome as Dataset, cuda_collate_fn
 from lib.object_detector import detector
 from lib.config import Config
 from lib.evaluation_recall import BasicSceneGraphEvaluator
 from lib.AdamW import AdamW
 from lib.sttran import STTran
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 
 """------------------------------------some settings----------------------------------------"""
 conf = Config()
@@ -26,36 +30,87 @@ for i in conf.args:
     print(i,':', conf.args[i])
 """-----------------------------------------------------------------------------------------"""
 
-AG_dataset_train = AG(mode="train", datasize=conf.datasize, data_path=conf.data_path, filter_nonperson_box_frame=True,
-                      filter_small_box=False if conf.mode == 'predcls' else True)
-dataloader_train = torch.utils.data.DataLoader(AG_dataset_train, shuffle=True, num_workers=4,
-                                               collate_fn=cuda_collate_fn, pin_memory=False)
-AG_dataset_test = AG(mode="test", datasize=conf.datasize, data_path=conf.data_path, filter_nonperson_box_frame=True,
-                     filter_small_box=False if conf.mode == 'predcls' else True)
-dataloader_test = torch.utils.data.DataLoader(AG_dataset_test, shuffle=False, num_workers=4,
-                                              collate_fn=cuda_collate_fn, pin_memory=False)
+dataset_train = Dataset(
+    mode="train", 
+    datasize=conf.datasize, 
+    data_path=conf.data_path, 
+    filter_nonperson_box_frame=True,
+    filter_small_box=False if conf.mode == 'predcls' else True,
+    config_path=conf.config_path
+)
 
-gpu_device = torch.device("cuda:0")
+dataloader_train = torch.utils.data.DataLoader(
+    dataset_train, 
+    shuffle=True, 
+    num_workers=1,
+    collate_fn=cuda_collate_fn, 
+    pin_memory=False)
+
+dataset_test = Dataset(
+    mode="test",
+    datasize=conf.datasize,
+    data_path=conf.data_path,
+    filter_nonperson_box_frame=True,
+    filter_small_box=False if conf.mode == 'predcls' else True,
+    config_path=conf.config_path)
+
+dataloader_test = torch.utils.data.DataLoader(
+    dataset_test,
+    shuffle=False,
+    num_workers=1,
+    collate_fn=cuda_collate_fn,
+    pin_memory=False)
+
+cpu_device = torch.device("cpu")
+sttran_device = torch.device("cuda:1")
+object_detector_device = torch.device("cuda:0")
 # freeze the detection backbone
-object_detector = detector(train=True, object_classes=AG_dataset_train.object_classes, use_SUPPLY=True, mode=conf.mode).to(device=gpu_device)
+
+# Prepare a partial mapping
+checkpoint = torch.load('fasterRCNN/models/faster_rcnn_ag.pth')
+ignorable_keys = [
+    'RCNN_cls_score.weight',
+    'RCNN_cls_score.bias',
+    'RCNN_bbox_pred.weight',
+    'RCNN_bbox_pred.bias'
+]
+state_dict = {
+    k: v for k, v in checkpoint['model'].items() if k not in ignorable_keys
+}
+
+object_detector = detector(
+    train=True,
+    object_classes=dataset_train.object_classes,
+    use_SUPPLY=True,
+    mode=conf.mode,
+    state_dict=state_dict,
+    ignore_missing_keys=True,
+    device=object_detector_device,
+    batch_size=5
+).to(device=object_detector_device)
+
 object_detector.eval()
 
-model = STTran(mode=conf.mode,
-               attention_class_num=len(AG_dataset_train.attention_relationships),
-               spatial_class_num=len(AG_dataset_train.spatial_relationships),
-               contact_class_num=len(AG_dataset_train.contacting_relationships),
-               obj_classes=AG_dataset_train.object_classes,
-               enc_layer_num=conf.enc_layer,
-               dec_layer_num=conf.dec_layer).to(device=gpu_device)
+model = STTran(
+    mode=conf.mode,
+    source_class_num=len(dataset_train.source_relationships),
+    target_class_num=len(dataset_train.target_relationships),
+    obj_classes=dataset_train.object_classes,
+    enc_layer_num=conf.enc_layer,
+    dec_layer_num=conf.dec_layer,
+    word_vec_dir=conf.word_vec_dir,
+    word_vec_dim=200
+).to(device=sttran_device)
 
-evaluator =BasicSceneGraphEvaluator(mode=conf.mode,
-                                    AG_object_classes=AG_dataset_train.object_classes,
-                                    AG_all_predicates=AG_dataset_train.relationship_classes,
-                                    AG_attention_predicates=AG_dataset_train.attention_relationships,
-                                    AG_spatial_predicates=AG_dataset_train.spatial_relationships,
-                                    AG_contacting_predicates=AG_dataset_train.contacting_relationships,
-                                    iou_threshold=0.5,
-                                    constraint='with')
+evaluator = BasicSceneGraphEvaluator(
+    mode=conf.mode,
+    object_classes=dataset_train.object_classes,
+    all_predicates=dataset_train.relationship_classes,
+    source_predicates=dataset_train.source_relationships,
+    target_predicates=dataset_train.target_relationships,
+    iou_threshold=0.5,
+    constraint='with'
+)
 
 # loss function, default Multi-label margin loss
 if conf.bce_loss:
@@ -84,54 +139,71 @@ for epoch in range(conf.nepoch):
     start = time.time()
     train_iter = iter(dataloader_train)
     test_iter = iter(dataloader_test)
+    
     for b in range(len(dataloader_train)):
+    # for b in range(2):
+        print(f"Fetching train data {b}")
         data = next(train_iter)
 
-        im_data = copy.deepcopy(data[0].cuda(0))
-        im_info = copy.deepcopy(data[1].cuda(0))
-        gt_boxes = copy.deepcopy(data[2].cuda(0))
-        num_boxes = copy.deepcopy(data[3].cuda(0))
-        gt_annotation = AG_dataset_train.gt_annotations[data[4]]
+        im_data = copy.deepcopy(data[0].to(object_detector_device))
+        im_info = copy.deepcopy(data[1].to(object_detector_device))
+        gt_boxes = copy.deepcopy(data[2].to(object_detector_device))
+        num_boxes = copy.deepcopy(data[3].to(object_detector_device))
+        gt_annotation = dataset_train.gt_annotations[data[4]]
 
         # prevent gradients to FasterRCNN
         with torch.no_grad():
-            entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation ,im_all=None)
+            entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
+            entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
+
+        # Try to avoid GPU OOM
+        im_data.to(cpu_device)
+        im_info.to(cpu_device)
+        gt_boxes.to(cpu_device)
+        num_boxes.to(cpu_device)
+
+        del im_data
+        del im_info
+        del gt_boxes
+        del num_boxes
+
+        torch.cuda.empty_cache()
 
         pred = model(entry)
 
-        attention_distribution = pred["attention_distribution"]
-        spatial_distribution = pred["spatial_distribution"]
-        contact_distribution = pred["contacting_distribution"]
+        source_distribution = pred["source_distribution"]
+        target_distribution = pred["target_distribution"]
 
-        attention_label = torch.tensor(pred["attention_gt"], dtype=torch.long).to(device=attention_distribution.device).squeeze()
+        # attention_label = torch.tensor(pred["attention_gt"], dtype=torch.long).to(device=attention_distribution.device).squeeze()
         if not conf.bce_loss:
             # multi-label margin loss or adaptive loss
-            spatial_label = -torch.ones([len(pred["spatial_gt"]), 6], dtype=torch.long).to(device=attention_distribution.device)
-            contact_label = -torch.ones([len(pred["contacting_gt"]), 17], dtype=torch.long).to(device=attention_distribution.device)
-            for i in range(len(pred["spatial_gt"])):
-                spatial_label[i, : len(pred["spatial_gt"][i])] = torch.tensor(pred["spatial_gt"][i])
-                contact_label[i, : len(pred["contacting_gt"][i])] = torch.tensor(pred["contacting_gt"][i])
+            source_label = -torch.ones([len(pred["source_gt"]), dataset_train.num_source_relationships], dtype=torch.long).to(device=source_distribution.device)
+            target_label = -torch.ones([len(pred["target_gt"]), dataset_train.num_target_relationships], dtype=torch.long).to(device=source_distribution.device)
+            for i in range(len(pred["source_gt"])):
+                source_label[i, : len(pred["source_gt"][i])] = torch.tensor(pred["source_gt"][i])
+                target_label[i, : len(pred["target_gt"][i])] = torch.tensor(pred["target_gt"][i])
 
         else:
             # bce loss
-            spatial_label = torch.zeros([len(pred["spatial_gt"]), 6], dtype=torch.float32).to(device=attention_distribution.device)
-            contact_label = torch.zeros([len(pred["contacting_gt"]), 17], dtype=torch.float32).to(device=attention_distribution.device)
-            for i in range(len(pred["spatial_gt"])):
-                spatial_label[i, pred["spatial_gt"][i]] = 1
-                contact_label[i, pred["contacting_gt"][i]] = 1
+            # TODO: what are these magic numbers?
+            source_label = torch.zeros([len(pred["source_gt"]), dataset_train.num_source_relationships], dtype=torch.float32).to(device=source_distribution.device)
+            target_label = torch.zeros([len(pred["target_gt"]), dataset_train.num_target_relationships], dtype=torch.float32).to(device=source_distribution.device)
+            for i in range(len(pred["source_gt"])):
+                source_label[i, pred["source_gt"][i]] = 1
+                target_label[i, pred["target_gt"][i]] = 1
 
         losses = {}
         if conf.mode == 'sgcls' or conf.mode == 'sgdet':
             losses['object_loss'] = ce_loss(pred['distribution'], pred['labels'])
 
-        losses["attention_relation_loss"] = ce_loss(attention_distribution, attention_label)
+        # losses["attention_relation_loss"] = ce_loss(attention_distribution, attention_label)
         if not conf.bce_loss:
-            losses["spatial_relation_loss"] = mlm_loss(spatial_distribution, spatial_label)
-            losses["contact_relation_loss"] = mlm_loss(contact_distribution, contact_label)
+            losses["source_relation_loss"] = mlm_loss(source_distribution, source_label)
+            losses["target_relation_loss"] = mlm_loss(target_distribution, target_label)
 
         else:
-            losses["spatial_relation_loss"] = bce_loss(spatial_distribution, spatial_label)
-            losses["contact_relation_loss"] = bce_loss(contact_distribution, contact_label)
+            losses["source_relation_loss"] = bce_loss(source_distribution, source_label)
+            losses["target_relation_loss"] = bce_loss(target_distribution, target_label)
 
         optimizer.zero_grad()
         loss = sum(losses.values())
@@ -150,6 +222,10 @@ for epoch in range(conf.nepoch):
             print(mn)
             start = time.time()
 
+        del pred
+
+        torch.cuda.empty_cache()
+
     torch.save({"state_dict": model.state_dict()}, os.path.join(conf.save_path, "model_{}.tar".format(epoch)))
     print("*" * 40)
     print("save the checkpoint after {} epochs".format(epoch))
@@ -158,17 +234,44 @@ for epoch in range(conf.nepoch):
     object_detector.is_train = False
     with torch.no_grad():
         for b in range(len(dataloader_test)):
+        # for b in range(2):
+            print(f"Fetching test data {b}")
             data = next(test_iter)
 
-            im_data = copy.deepcopy(data[0].cuda(0))
-            im_info = copy.deepcopy(data[1].cuda(0))
-            gt_boxes = copy.deepcopy(data[2].cuda(0))
-            num_boxes = copy.deepcopy(data[3].cuda(0))
-            gt_annotation = AG_dataset_test.gt_annotations[data[4]]
+            im_data = copy.deepcopy(data[0].to(object_detector_device))
+            im_info = copy.deepcopy(data[1].to(object_detector_device))
+            gt_boxes = copy.deepcopy(data[2].to(object_detector_device))
+            num_boxes = copy.deepcopy(data[3].to(object_detector_device))
+            gt_annotation = dataset_test.gt_annotations[data[4]]
 
             entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
+            entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
+
+            # Try to avoid GPU OOM
+            im_data.to(cpu_device)
+            im_info.to(cpu_device)
+            gt_boxes.to(cpu_device)
+            num_boxes.to(cpu_device)
+
+            del im_data
+            del im_info
+            del gt_boxes
+            del num_boxes
+
+            torch.cuda.empty_cache()
+
             pred = model(entry)
+
+            del entry
+
+            torch.cuda.empty_cache()
+
             evaluator.evaluate_scene_graph(gt_annotation, pred)
+
+        del pred
+
+        torch.cuda.empty_cache()
+            
         print('-----------', flush=True)
     score = np.mean(evaluator.result_dict[conf.mode + "_recall"][20])
     evaluator.print_stats()

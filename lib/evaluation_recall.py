@@ -1,23 +1,33 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import json
 from functools import reduce
 from lib.ults.pytorch_misc import intersect_2d, argsort_desc
 from lib.fpn.box_intersections_cpu.bbox import bbox_overlaps
 
+
 class BasicSceneGraphEvaluator:
-    def __init__(self, mode, AG_object_classes, AG_all_predicates, AG_attention_predicates, AG_spatial_predicates, AG_contacting_predicates,
-                 iou_threshold=0.5, constraint=False, semithreshold=None):
+    def __init__(
+            self,
+            mode,
+            object_classes,
+            all_predicates,
+            source_predicates,
+            target_predicates,
+            iou_threshold=0.5,
+            constraint=False,
+            semithreshold=None
+    ):
         self.result_dict = {}
         self.mode = mode
         self.result_dict[self.mode + '_recall'] = {10: [], 20: [], 50: [], 100: []}
         self.constraint = constraint # semi constraint if True
         self.iou_threshold = iou_threshold
-        self.AG_object_classes = AG_object_classes
-        self.AG_all_predicates = AG_all_predicates
-        self.AG_attention_predicates = AG_attention_predicates
-        self.AG_spatial_predicates = AG_spatial_predicates
-        self.AG_contacting_predicates = AG_contacting_predicates
+        self.object_classes = object_classes
+        self.all_predicates = all_predicates
+        self.source_predicates = source_predicates
+        self.target_predicates = target_predicates
         self.semithreshold = semithreshold
 
     def reset_result(self):
@@ -28,10 +38,8 @@ class BasicSceneGraphEvaluator:
         for k, v in self.result_dict[self.mode + '_recall'].items():
             print('R@%i: %f' % (k, np.mean(v)))
 
-    def evaluate_scene_graph(self, gt, pred):
+    def evaluate_scene_graph(self, gt, pred, result_path=None):
         '''collect the groundtruth and prediction'''
-
-        pred['attention_distribution'] = nn.functional.softmax(pred['attention_distribution'], dim=1)
 
         for idx, frame_gt in enumerate(gt):
             # generate the ground truth
@@ -45,12 +53,11 @@ class BasicSceneGraphEvaluator:
                 # each pair
                 gt_boxes[m+1,:] = n['bbox']
                 gt_classes[m+1] = n['class']
-                gt_relations.append([human_idx, m+1, self.AG_all_predicates.index(self.AG_attention_predicates[n['attention_relationship']])]) # for attention triplet <human-object-predicate>_
-                #spatial and contacting relationship could be multiple
-                for spatial in n['spatial_relationship'].numpy().tolist():
-                    gt_relations.append([m+1, human_idx, self.AG_all_predicates.index(self.AG_spatial_predicates[spatial])]) # for spatial triplet <object-human-predicate>
-                for contact in n['contacting_relationship'].numpy().tolist():
-                    gt_relations.append([human_idx, m+1, self.AG_all_predicates.index(self.AG_contacting_predicates[contact])])  # for contact triplet <human-object-predicate>
+                #source and target relationship could be multiple
+                for source in n['source_relationship'].numpy().tolist():
+                    gt_relations.append([human_idx, m+1, self.all_predicates.index(self.source_predicates[source])]) # for source triplet <object-human-predicate>
+                for target in n['target_relationship'].numpy().tolist():
+                    gt_relations.append([human_idx, m+1, self.all_predicates.index(self.target_predicates[target])])  # for target triplet <human-object-predicate>
 
             gt_entry = {
                 'gt_classes': gt_classes,
@@ -61,19 +68,20 @@ class BasicSceneGraphEvaluator:
             # first part for attention and contact, second for spatial
 
             rels_i = np.concatenate((pred['pair_idx'][pred['im_idx'] == idx].cpu().clone().numpy(),             #attention
-                                     pred['pair_idx'][pred['im_idx'] == idx].cpu().clone().numpy()[:,::-1],     #spatial
+                                     # pred['pair_idx'][pred['im_idx'] == idx].cpu().clone().numpy()[:,::-1],     #spatial
                                      pred['pair_idx'][pred['im_idx'] == idx].cpu().clone().numpy()), axis=0)    #contacting
 
+            pred_scores_1 = np.concatenate(
+                (
+                    pred['source_distribution'][pred['im_idx'] == idx].cpu().numpy(),
+                    np.zeros([pred['pair_idx'][pred['im_idx'] == idx].shape[0], pred['target_distribution'].shape[1]])
+                ), axis=1)
 
-            pred_scores_1 = np.concatenate((pred['attention_distribution'][pred['im_idx'] == idx].cpu().numpy(),
-                                            np.zeros([pred['pair_idx'][pred['im_idx'] == idx].shape[0], pred['spatial_distribution'].shape[1]]),
-                                            np.zeros([pred['pair_idx'][pred['im_idx'] == idx].shape[0], pred['contacting_distribution'].shape[1]])), axis=1)
-            pred_scores_2 = np.concatenate((np.zeros([pred['pair_idx'][pred['im_idx'] == idx].shape[0], pred['attention_distribution'].shape[1]]),
-                                            pred['spatial_distribution'][pred['im_idx'] == idx].cpu().numpy(),
-                                            np.zeros([pred['pair_idx'][pred['im_idx'] == idx].shape[0], pred['contacting_distribution'].shape[1]])), axis=1)
-            pred_scores_3 = np.concatenate((np.zeros([pred['pair_idx'][pred['im_idx'] == idx].shape[0], pred['attention_distribution'].shape[1]]),
-                                            np.zeros([pred['pair_idx'][pred['im_idx'] == idx].shape[0], pred['spatial_distribution'].shape[1]]),
-                                            pred['contacting_distribution'][pred['im_idx'] == idx].cpu().numpy()), axis=1)
+            pred_scores_2 = np.concatenate(
+                (
+                    np.zeros([pred['pair_idx'][pred['im_idx'] == idx].shape[0], pred['source_distribution'].shape[1]]),
+                    pred['target_distribution'][pred['im_idx'] == idx].cpu().numpy()
+                ), axis=1)
 
             if self.mode == 'predcls':
 
@@ -82,7 +90,7 @@ class BasicSceneGraphEvaluator:
                     'pred_classes': pred['labels'].cpu().clone().numpy(),
                     'pred_rel_inds': rels_i,
                     'obj_scores': pred['scores'].cpu().clone().numpy(),
-                    'rel_scores': np.concatenate((pred_scores_1, pred_scores_2, pred_scores_3), axis=0)
+                    'rel_scores': np.concatenate((pred_scores_1, pred_scores_2), axis=0)
                 }
             else:
                 pred_entry = {
@@ -90,13 +98,14 @@ class BasicSceneGraphEvaluator:
                     'pred_classes': pred['pred_labels'].cpu().clone().numpy(),
                     'pred_rel_inds': rels_i,
                     'obj_scores': pred['pred_scores'].cpu().clone().numpy(),
-                    'rel_scores': np.concatenate((pred_scores_1, pred_scores_2, pred_scores_3), axis=0)
+                    'rel_scores': np.concatenate((pred_scores_1, pred_scores_2), axis=0)
                 }
 
             evaluate_from_dict(gt_entry, pred_entry, self.mode, self.result_dict,
-                               iou_thresh=self.iou_threshold, method=self.constraint, threshold=self.semithreshold)
+                               iou_thresh=self.iou_threshold, result_path=result_path, method=self.constraint, threshold=self.semithreshold)
 
-def evaluate_from_dict(gt_entry, pred_entry, mode, result_dict, method=None, threshold = 0.9, **kwargs):
+
+def evaluate_from_dict(gt_entry, pred_entry, mode, result_dict, result_path=None, method=None, threshold = 0.9, **kwargs):
     """
     Shortcut to doing evaluate_recall from dict
     :param gt_entry: Dictionary containing gt_relations, gt_boxes, gt_classes
@@ -111,7 +120,6 @@ def evaluate_from_dict(gt_entry, pred_entry, mode, result_dict, method=None, thr
 
     pred_rel_inds = pred_entry['pred_rel_inds']
     rel_scores = pred_entry['rel_scores']
-
 
     pred_boxes = pred_entry['pred_boxes'].astype(float)
     pred_classes = pred_entry['pred_classes']
@@ -144,11 +152,9 @@ def evaluate_from_dict(gt_entry, pred_entry, mode, result_dict, method=None, thr
         score_inds = argsort_desc(overall_scores)[:100]
         pred_rels = np.column_stack((pred_rel_inds[score_inds[:, 0]], score_inds[:, 1]))
         predicate_scores = rel_scores[score_inds[:, 0], score_inds[:, 1]]
-
     else:
         pred_rels = np.column_stack((pred_rel_inds, rel_scores.argmax(1))) #1+  dont add 1 because no dummy 'no relations'
         predicate_scores = rel_scores.max(1)
-
 
     pred_to_gt, pred_5ples, rel_scores = evaluate_recall(
                 gt_rels, gt_boxes, gt_classes,
@@ -157,12 +163,32 @@ def evaluate_from_dict(gt_entry, pred_entry, mode, result_dict, method=None, thr
                 **kwargs)
 
     for k in result_dict[mode + '_recall']:
-
         match = reduce(np.union1d, pred_to_gt[:k])
 
         rec_i = float(len(match)) / float(gt_rels.shape[0])
         result_dict[mode + '_recall'][k].append(rec_i)
+
+    if result_path:
+        result_data = {
+            'gt_rels': gt_rels.tolist(),
+            'gt_boxes': gt_boxes.tolist(),
+            'gt_classes': gt_classes.tolist(),
+            'pred_rel_inds': pred_rel_inds.tolist(),
+            'rel_scores': rel_scores.tolist(),
+            'pred_boxes': pred_boxes.tolist(),
+            'pred_classes': pred_classes.tolist(),
+            'obj_scores': obj_scores.tolist(),
+            'pred_rels': pred_rels.tolist(),
+            'predicate_scores': predicate_scores.tolist(),
+            f'{mode}_recall': result_dict[f'{mode}_recall'],
+            'pred_to_gt': pred_to_gt,
+            'pred_5ples': [e.tolist() for e in pred_5ples]
+        }
+        with open(result_path, 'w') as result_file:
+            json.dump(result_data, result_file)
+
     return pred_to_gt, pred_5ples, rel_scores
+
 
 ###########################
 def evaluate_recall(gt_rels, gt_boxes, gt_classes,

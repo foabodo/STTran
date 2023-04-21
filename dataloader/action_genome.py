@@ -3,13 +3,13 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize
 import random
-from scipy.misc import imread
+from imageio import imread
 import numpy as np
 import pickle
 import os
 from fasterRCNN.lib.model.utils.blob import prep_im_for_blob, im_list_to_blob
 
-class AG(Dataset):
+class ActionGenome(Dataset):
 
     def __init__(self, mode, datasize, data_path=None, filter_nonperson_box_frame=True, filter_small_box=False):
 
@@ -59,16 +59,16 @@ class AG(Dataset):
         print('-------loading annotations---------slowly-----------')
 
         if filter_small_box:
-            with open(root_path + 'annotations/person_bbox.pkl', 'rb') as f:
+            with open(os.path.join(root_path, 'annotations/person_bbox.pkl'), 'rb') as f:
                 person_bbox = pickle.load(f)
             f.close()
             with open('dataloader/object_bbox_and_relationship_filtersmall.pkl', 'rb') as f:
                 object_bbox = pickle.load(f)
         else:
-            with open(root_path + 'annotations/person_bbox.pkl', 'rb') as f:
+            with open(os.path.join(root_path, 'annotations/person_bbox.pkl'), 'rb') as f:
                 person_bbox = pickle.load(f)
             f.close()
-            with open(root_path+'annotations/object_bbox_and_relationship.pkl', 'rb') as f:
+            with open(os.path.join(root_path, 'annotations/object_bbox_and_relationship.pkl'), 'rb') as f:
                 object_bbox = pickle.load(f)
             f.close()
         print('--------------------finish!-------------------------')

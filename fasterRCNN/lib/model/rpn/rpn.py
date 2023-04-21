@@ -47,7 +47,7 @@ class _RPN(nn.Module):
     @staticmethod
     def reshape(x, d):
         input_shape = x.size()
-        x = x.view(
+        x = x.reshape(
             input_shape[0],
             int(d),
             int(float(input_shape[1] * input_shape[2]) / float(d)),
@@ -55,7 +55,7 @@ class _RPN(nn.Module):
         )
         return x
 
-    def forward(self, base_feat, im_info, gt_boxes, num_boxes):
+    def forward(self, base_feat, im_info, gt_boxes=None, num_boxes=None):
 
         batch_size = base_feat.size(0)
 
@@ -83,6 +83,7 @@ class _RPN(nn.Module):
         # generating training labels and build the rpn loss
         if self.training:
             assert gt_boxes is not None
+            assert num_boxes is not None
 
             rpn_data = self.RPN_anchor_target((rpn_cls_score.data, gt_boxes, im_info, num_boxes))
 

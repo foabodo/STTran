@@ -227,7 +227,7 @@ if __name__ == '__main__':
   dataset = roibatchLoader(roidb, ratio_list, ratio_index, 1, \
                         imdb.num_classes, training=False, normalize = False)
   dataloader = torch.utils.data.DataLoader(dataset, batch_size=1,
-                            shuffle=False, num_workers=0,
+                            shuffle=False, num_workers=int(os.cpu_count() / 2),
                             pin_memory=True)
 
   data_iter = iter(dataloader)

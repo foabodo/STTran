@@ -63,7 +63,7 @@ def parse_args():
                       type=str)
   parser.add_argument('--nw', dest='num_workers',
                       help='number of worker to load data',
-                      default=0, type=int)
+                      default=int(os.cpu_count() / 2), type=int)
   parser.add_argument('--cuda', dest='cuda',
                       help='whether use CUDA',
                       action='store_true')

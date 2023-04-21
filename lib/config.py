@@ -43,4 +43,7 @@ class Config(object):
         parser.add_argument('-enc_layer', dest='enc_layer', help='spatial encoder layer', default=1, type=int)
         parser.add_argument('-dec_layer', dest='dec_layer', help='temporal decoder layer', default=3, type=int)
         parser.add_argument('-bce_loss', action='store_true')
+        parser.add_argument('-word_vec_dir', dest='word_vec_dir', help='dir where downloaded word vecs will be stored', default='data')
+        parser.add_argument('-result_path', default=None, type=str)
+        parser.add_argument('-config_path', required=True, help="Path to a yaml config file that defines dataset parameters and values (e.g. class names)")
         return parser
