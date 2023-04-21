@@ -48,8 +48,7 @@ dataloader_train = torch.utils.data.DataLoader(
     shuffle=True, 
     num_workers=1,
     collate_fn=cuda_collate_fn,
-    pin_memory=True,
-    pin_memory_device="cuda:0")
+    pin_memory=True)
 
 dataset_test = Dataset(
     mode="test",
@@ -64,12 +63,11 @@ dataloader_test = torch.utils.data.DataLoader(
     shuffle=False,
     num_workers=1,
     collate_fn=cuda_collate_fn,
-    pin_memory=True,
-    pin_memory_device="cuda:0")
+    pin_memory=True)
 
 cpu_device = torch.device("cpu")
-sttran_device = torch.device("cuda:1")
-object_detector_device = torch.device("cuda:0")
+sttran_device = torch.device("cuda:0")
+object_detector_device = torch.device("cuda:1")
 # freeze the detection backbone
 
 # Prepare a partial mapping
@@ -105,7 +103,8 @@ model = STTran(
     enc_layer_num=conf.enc_layer,
     dec_layer_num=conf.dec_layer,
     word_vec_dir=yaml_config["word_vec_dir"],
-    word_vec_dim=yaml_config["word_vec_dim"]
+    word_vec_dim=yaml_config["word_vec_dim"],
+    device=sttran_device
 ).to(device=sttran_device)
 
 evaluator = BasicSceneGraphEvaluator(
