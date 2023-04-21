@@ -356,7 +356,7 @@ class detector(nn.Module):
             im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
 
             counter = 0
-            FINAL_BASE_FEATURES = torch.tensor([]).to(self.device)
+            FINAL_BASE_FEATURES = torch.tensor([]).to(self.faster_rcnn_device)
             # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             while counter < im_data.shape[0]:
