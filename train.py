@@ -99,7 +99,7 @@ model = STTran(
     enc_layer_num=conf.enc_layer,
     dec_layer_num=conf.dec_layer,
     word_vec_dir=conf.word_vec_dir,
-    word_vec_dim=200
+    word_vec_dim=conf.word_vec_dim
 ).to(device=sttran_device)
 
 evaluator = BasicSceneGraphEvaluator(
@@ -109,7 +109,7 @@ evaluator = BasicSceneGraphEvaluator(
     source_predicates=dataset_train.source_relationships,
     target_predicates=dataset_train.target_relationships,
     iou_threshold=0.5,
-    constraint='with'
+    constraint=conf.constraint
 )
 
 # loss function, default Multi-label margin loss
