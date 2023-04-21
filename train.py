@@ -47,7 +47,7 @@ dataset_train = Dataset(
 dataloader_train = torch.utils.data.DataLoader(
     dataset_train, 
     shuffle=True, 
-    num_workers=1,
+    num_workers=2,
     collate_fn=cuda_collate_fn,
     pin_memory=False)
 
@@ -62,7 +62,7 @@ dataset_test = Dataset(
 dataloader_test = torch.utils.data.DataLoader(
     dataset_test,
     shuffle=False,
-    num_workers=1,
+    num_workers=2,
     collate_fn=cuda_collate_fn,
     pin_memory=False)
 
@@ -91,7 +91,7 @@ object_detector = detector(
     state_dict=state_dict,
     ignore_missing_keys=True,
     device=object_detector_device,
-    batch_size=5
+    batch_size=yaml_config["batch_size"]
 ).to(device=object_detector_device)
 
 object_detector.eval()
@@ -114,7 +114,7 @@ evaluator = BasicSceneGraphEvaluator(
     all_predicates=dataset_train.relationship_classes,
     source_predicates=dataset_train.source_relationships,
     target_predicates=dataset_train.target_relationships,
-    iou_threshold=0.5,
+    iou_threshold=yaml_config["iou_threshold"],
     constraint=yaml_config["constraint"]
 )
 
@@ -163,18 +163,18 @@ for epoch in range(conf.nepoch):
 
         entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
 
-        # # Try to avoid GPU OOM
-        # im_data.to(cpu_device)
-        # im_info.to(cpu_device)
-        # gt_boxes.to(cpu_device)
-        # num_boxes.to(cpu_device)
-        #
-        # del im_data
-        # del im_info
-        # del gt_boxes
-        # del num_boxes
-        #
-        # torch.cuda.empty_cache()
+        # Try to avoid GPU OOM
+        im_data.to(cpu_device)
+        im_info.to(cpu_device)
+        gt_boxes.to(cpu_device)
+        num_boxes.to(cpu_device)
+
+        del im_data
+        del im_info
+        del gt_boxes
+        del num_boxes
+
+        torch.cuda.empty_cache()
 
         pred = model(entry)
 
