@@ -8,7 +8,7 @@ target_relationship_classes: ['add_into', 'add_to', 'adjust_in', 'adjust_on', 'a
 enc_layer: 1
 dec_layer: 3
 iou_threshold: 0.5
-constraint: 'semi'  # with/semi/no
+constraint: 'with'  # with/semi/no
 semithreshold: 0.9
 
 batch_size: 9
