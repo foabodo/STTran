@@ -49,7 +49,7 @@ dataloader_train = torch.utils.data.DataLoader(
     shuffle=True, 
     num_workers=1,
     collate_fn=cuda_collate_fn,
-    pin_memory=True)
+    pin_memory=False)
 
 dataset_test = Dataset(
     mode="test",
@@ -64,7 +64,7 @@ dataloader_test = torch.utils.data.DataLoader(
     shuffle=False,
     num_workers=1,
     collate_fn=cuda_collate_fn,
-    pin_memory=True)
+    pin_memory=False)
 
 cpu_device = torch.device("cpu")
 sttran_device = torch.device("cuda:0")
@@ -160,20 +160,21 @@ for epoch in range(conf.nepoch):
         # prevent gradients to FasterRCNN
         with torch.no_grad():
             entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
-            entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
 
-        # Try to avoid GPU OOM
-        im_data.to(cpu_device)
-        im_info.to(cpu_device)
-        gt_boxes.to(cpu_device)
-        num_boxes.to(cpu_device)
+        entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
 
-        del im_data
-        del im_info
-        del gt_boxes
-        del num_boxes
-
-        torch.cuda.empty_cache()
+        # # Try to avoid GPU OOM
+        # im_data.to(cpu_device)
+        # im_info.to(cpu_device)
+        # gt_boxes.to(cpu_device)
+        # num_boxes.to(cpu_device)
+        #
+        # del im_data
+        # del im_info
+        # del gt_boxes
+        # del num_boxes
+        #
+        # torch.cuda.empty_cache()
 
         pred = model(entry)
 
