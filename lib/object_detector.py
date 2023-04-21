@@ -54,8 +54,6 @@ class detector(nn.Module):
                 strict=not ignore_missing_keys
             )
 
-        self.fasterRCNN.to(self.faster_rcnn_device)
-
         self.ROI_Align = copy.deepcopy(self.fasterRCNN.RCNN_roi_align)
         self.RCNN_Head = copy.deepcopy(self.fasterRCNN._head_to_tail)
 
@@ -106,10 +104,10 @@ class detector(nn.Module):
                         inputs_numboxes = num_boxes[counter:]
 
                 # output_list = [self.fasterRCNN(
-                #     inputs_data[i].to(self.faster_rcnn_device),
-                #     inputs_info[i].to(self.faster_rcnn_device),
-                #     inputs_gtboxes[i].to(self.faster_rcnn_device),
-                #     inputs_numboxes[i].to(self.faster_rcnn_device)
+                #     inputs_data[i],
+                #     inputs_info[i],
+                #     inputs_gtboxes[i],
+                #     inputs_numboxes[i]
                 # ) for i in range(self.batch_size)]
                 #
                 # rois = torch.tensor([output[0] for output in output_list]).to(self.device)
@@ -366,17 +364,16 @@ class detector(nn.Module):
                 else:
                     inputs_data = im_data[counter:]
                 # print(f"RCNN_base_inputs_data: {inputs_data.size()}")
-                base_feat = self.fasterRCNN.RCNN_base(inputs_data.to(self.faster_rcnn_device))
+                base_feat = self.fasterRCNN.RCNN_base(inputs_data)
                 # print(f"RCNN_base_feat: {base_feat.size()}")
-                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
+                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat.to(self.faster_rcnn_device)), 0)
                 # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
                 counter += self.batch_size
 
-            # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}, {FINAL_BASE_FEATURES.device}")
-            # FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
+            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}, {FINAL_BASE_FEATURES.device}")
+            FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
-            FINAL_BBOXES = FINAL_BBOXES.to(self.faster_rcnn_device)
 
             print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}, {FINAL_BASE_FEATURES.device}")
             print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}, {FINAL_BBOXES.device}")
