@@ -157,6 +157,8 @@ for epoch in range(conf.nepoch):
         num_boxes = copy.deepcopy(data[3]).to(object_detector_device)
         gt_annotation = dataset_train.gt_annotations[data[4]]
 
+        print(f"GT_ANNOTATION_LEN: {gt_annotation}")
+
         # prevent gradients to FasterRCNN
         with torch.no_grad():
             entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
