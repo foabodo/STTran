@@ -156,7 +156,7 @@ for epoch in range(conf.nepoch):
         print(f"GT_ANNOTATION_LEN: {num_gt_annotations}")
 
         # we can't fit too many bboxes in GPU ram at the same time
-        if num_gt_annotations > 5000 or num_gt_annotations < 3000:
+        if num_gt_annotations > 5000 or num_gt_annotations < 4000:
             continue
 
         im_data = copy.deepcopy(data[0]).to(object_detector_device)
