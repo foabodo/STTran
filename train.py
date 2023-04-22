@@ -181,7 +181,7 @@ for epoch in range(int(conf.nepoch)):
                     im_info[i: i+limit].to(object_detector_device),
                     gt_boxes[i: i+limit].to(object_detector_device),
                     num_boxes[i: i+limit].to(object_detector_device),
-                    gt_annotation[i: i+limit].to(object_detector_device),
+                    gt_annotation[i: i+limit],
                     im_all=None
                 )
                 if entries is None:
