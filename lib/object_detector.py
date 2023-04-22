@@ -260,6 +260,8 @@ class detector(nn.Module):
                 union_boxes[:, 1:] = union_boxes[:, 1:] * im_info[0, 2]
                 union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
 
+                del FINAL_BASE_FEATURES
+
                 pair_rois = torch.cat((FINAL_BBOXES_X[pair[:,0],1:],FINAL_BBOXES_X[pair[:,1],1:]), 1).data.cpu().numpy()
                 spatial_masks = torch.tensor(draw_union_boxes(pair_rois, 27) - 0.5).to(FINAL_FEATURES.device)
 
