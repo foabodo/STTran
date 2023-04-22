@@ -39,7 +39,7 @@ class detector(nn.Module):
             classes=self.object_classes,
             pretrained=False,
             class_agnostic=False
-        ).to("cuda:2")
+        ).to(torch.device("cuda:2"))
         self.fasterRCNN.create_architecture()
 
         if state_dict:  # we're using Torchserve
@@ -341,25 +341,31 @@ class detector(nn.Module):
                 else:
                     inputs_data = im_data[counter:]
                 base_feat = self.fasterRCNN.RCNN_base(inputs_data)
+                print(f"base_feat.device: {base_feat.device}")
                 FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
                 counter += self.batch_size
 
             # FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
             print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
+            print(f"FINAL_BASE_FEATURES.device: {FINAL_BASE_FEATURES.device}")
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
             print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
+            print(f"FINAL_BBOXES.device: {FINAL_BBOXES.device}")
 
             FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
             print(f"FINAL_FEATURES (roi_align): {FINAL_FEATURES.size()}")
+            print(f"FINAL_FEATURES.device: {FINAL_FEATURES.device}")
 
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
             print(f"FINAL_FEATURES (head_to_tail): {FINAL_FEATURES.size()}")
+            print(f"FINAL_FEATURES.device: {FINAL_FEATURES.device}")
 
             if self.mode == 'predcls':
                 union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
                                          torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])), 1)
                 union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
+                print(f"union_feat.device: {union_feat.device}")
 
                 FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] / im_info[0, 2]
                 pair_rois = torch.cat((FINAL_BBOXES[pair[:, 0], 1:], FINAL_BBOXES[pair[:, 1], 1:]),
