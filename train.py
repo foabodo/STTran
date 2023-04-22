@@ -154,7 +154,7 @@ for epoch in range(int(conf.nepoch)):
         num_gt_annotations = sum([len(anno) for anno in gt_annotation])
 
         print(f"GT_ANNOTATION_LEN: {num_gt_annotations}")
-        print(f"GT_ANNOTATION_LEN: {gt_annotation}")
+        print(f"GT_ANNOTATION_LEN: {len(gt_annotation)}")
 
         # # we can't fit too many bboxes in GPU ram at the same time
         # if num_gt_annotations >= 3625:
