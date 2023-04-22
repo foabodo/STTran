@@ -139,7 +139,7 @@ scheduler = ReduceLROnPlateau(optimizer, "max", patience=1, factor=0.5, verbose=
 # some parameters
 tr = []
 
-for epoch in range(conf.nepoch):
+for epoch in range(int(conf.nepoch)):
     model.train()
     object_detector.is_train = True
     start = time.time()
