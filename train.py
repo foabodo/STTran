@@ -67,8 +67,8 @@ dataloader_test = torch.utils.data.DataLoader(
     pin_memory=False)
 
 cpu_device = torch.device("cpu")
-sttran_device = torch.device("cuda:0")
-object_detector_device = torch.device("cuda:1")
+sttran_device = torch.device("cuda:1")
+object_detector_device = torch.device("cuda:0")
 # freeze the detection backbone
 
 # Prepare a partial mapping
@@ -160,7 +160,7 @@ for epoch in range(int(conf.nepoch)):
         # if num_gt_annotations >= 3625:
         #     continue
 
-        im_data = copy.deepcopy(data[0]).to(object_detector_device)
+        im_data = copy.deepcopy(data[0])
         im_info = copy.deepcopy(data[1]).to(object_detector_device)
         gt_boxes = copy.deepcopy(data[2]).to(object_detector_device)
         num_boxes = copy.deepcopy(data[3]).to(object_detector_device)
@@ -171,32 +171,37 @@ for epoch in range(int(conf.nepoch)):
         print(f"num_boxes.shape: {num_boxes.size()}")
 
         # prevent gradients to FasterRCNN
+        entries = None
+
         with torch.no_grad():
-            entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
+            for i in range(0, len(gt_annotation), 1000):
+                limit = i + 1000 if i + 1000 <= len(gt_annotation) else len(gt_annotation)
+                entry = object_detector(
+                    im_data[i: i+limit].to(object_detector_device),
+                    im_info[i: i+limit].to(object_detector_device),
+                    gt_boxes[i: i+limit].to(object_detector_device),
+                    num_boxes[i: i+limit].to(object_detector_device),
+                    gt_annotation[i: i+limit].to(object_detector_device),
+                    im_all=None
+                )
+                if entries is None:
+                    entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
+                else:
+                    entries = {
+                        k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
+                        else entries[k] + v for k, v in entry.items()
+                    }
 
-        entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
-
-        # # Try to avoid GPU OOM
-        # im_data.to(cpu_device)
-        # im_info.to(cpu_device)
-        # gt_boxes.to(cpu_device)
-        # num_boxes.to(cpu_device)
-        #
-        # del im_data
-        # del im_info
-        # del gt_boxes
-        # del num_boxes
-
-        pred = model(entry)
+        pred = model(entries)
 
         source_distribution = pred["source_distribution"]
         target_distribution = pred["target_distribution"]
 
-        # attention_label = torch.tensor(pred["attention_gt"], dtype=torch.long).to(device=attention_distribution.device).squeeze()
         if not conf.bce_loss:
             # multi-label margin loss or adaptive loss
             source_label = -torch.ones([len(pred["source_gt"]), dataset_train.num_source_relationships], dtype=torch.long).to(device=source_distribution.device)
             target_label = -torch.ones([len(pred["target_gt"]), dataset_train.num_target_relationships], dtype=torch.long).to(device=source_distribution.device)
+
             for i in range(len(pred["source_gt"])):
                 source_label[i, : len(pred["source_gt"][i])] = torch.tensor(pred["source_gt"][i])
                 target_label[i, : len(pred["target_gt"][i])] = torch.tensor(pred["target_gt"][i])
@@ -206,6 +211,7 @@ for epoch in range(int(conf.nepoch)):
             # TODO: what are these magic numbers?
             source_label = torch.zeros([len(pred["source_gt"]), dataset_train.num_source_relationships], dtype=torch.float32).to(device=source_distribution.device)
             target_label = torch.zeros([len(pred["target_gt"]), dataset_train.num_target_relationships], dtype=torch.float32).to(device=source_distribution.device)
+
             for i in range(len(pred["source_gt"])):
                 source_label[i, pred["source_gt"][i]] = 1
                 target_label[i, pred["target_gt"][i]] = 1
@@ -214,7 +220,6 @@ for epoch in range(int(conf.nepoch)):
         if conf.mode == 'sgcls' or conf.mode == 'sgdet':
             losses['object_loss'] = ce_loss(pred['distribution'], pred['labels'])
 
-        # losses["attention_relation_loss"] = ce_loss(attention_distribution, attention_label)
         if not conf.bce_loss:
             losses["source_relation_loss"] = mlm_loss(source_distribution, source_label)
             losses["target_relation_loss"] = mlm_loss(target_distribution, target_label)
@@ -239,10 +244,6 @@ for epoch in range(int(conf.nepoch)):
             mn = pd.concat(tr[-1000:], axis=1).mean(1)
             print(mn)
             start = time.time()
-
-        # del pred
-        #
-        # torch.cuda.empty_cache()
 
     torch.save({"state_dict": model.state_dict()}, os.path.join(conf.save_path, "model_{}.tar".format(epoch)))
     print("*" * 40)

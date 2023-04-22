@@ -40,7 +40,6 @@ class detector(nn.Module):
             pretrained=False,
             class_agnostic=False
         )
-        self.fasterRCNN.to(self.device)
 
         self.fasterRCNN.create_architecture()
 
