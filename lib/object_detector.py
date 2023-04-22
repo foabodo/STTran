@@ -39,7 +39,7 @@ class detector(nn.Module):
             classes=self.object_classes,
             pretrained=False,
             class_agnostic=False
-        )
+        ).to("cuda:2")
         self.fasterRCNN.create_architecture()
 
         if state_dict:  # we're using Torchserve
