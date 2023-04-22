@@ -184,14 +184,13 @@ for epoch in range(int(conf.nepoch)):
                     gt_annotation[i: i+limit],
                     im_all=None
                 )
-                print(f"entry: {entry}")
-                print(f"entry types: {[type(_) for _ in entry.values()]}")
+
                 if entries is None:
                     entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
                 else:
                     entries = {
                         k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
-                        else entries[k] + v for k, v in entry.items()
+                        else entries[k].expand(v) for k, v in entry.items()
                     }
 
         pred = model(entries)
