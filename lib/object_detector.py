@@ -39,7 +39,7 @@ class detector(nn.Module):
             classes=self.object_classes,
             pretrained=False,
             class_agnostic=False
-        )
+        ).to(torch.device("cuda:2"))
         self.fasterRCNN.create_architecture()
 
         if state_dict:  # we're using Torchserve
@@ -54,7 +54,7 @@ class detector(nn.Module):
                 strict=not ignore_missing_keys
             )
 
-        self.fasterRCNN = self.fasterRCNN.to(torch.device("cuda:2"))
+        # self.fasterRCNN = self.fasterRCNN.to(torch.device("cuda:2"))
 
         self.ROI_Align = copy.deepcopy(self.fasterRCNN.RCNN_roi_align)
         self.RCNN_Head = copy.deepcopy(self.fasterRCNN._head_to_tail)
