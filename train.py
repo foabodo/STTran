@@ -185,7 +185,7 @@ for epoch in range(int(conf.nepoch)):
                     im_all=None
                 )
                 print(f"entry: {entry}")
-                print(f"entry types: {[type(_) for _ in entry]}")
+                print(f"entry types: {[type(_) for _ in entry.values()]}")
                 if entries is None:
                     entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
                 else:
