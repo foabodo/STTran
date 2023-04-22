@@ -54,7 +54,7 @@ class detector(nn.Module):
                 strict=not ignore_missing_keys
             )
 
-        self.fasterRCNN = self.fasterRCNN.to(torch.device("cuda:2"))
+        # self.fasterRCNN = self.fasterRCNN.to(torch.device("cuda:2"))
 
         self.ROI_Align = copy.deepcopy(self.fasterRCNN.RCNN_roi_align)
         self.RCNN_Head = copy.deepcopy(self.fasterRCNN._head_to_tail)
@@ -333,7 +333,9 @@ class detector(nn.Module):
             im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
 
             counter = 0
-            FINAL_BASE_FEATURES = torch.tensor([]).to(self.device)
+            
+            FINAL_BASE_FEATURES_0 = torch.tensor([]).to(torch.device("cuda:2"))
+            FINAL_BASE_FEATURES_1 = torch.tensor([]).to(torch.device("cuda:3"))
             # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             while counter < im_data.shape[0]:
@@ -342,30 +344,56 @@ class detector(nn.Module):
                     inputs_data = im_data[counter:counter + self.batch_size]
                 else:
                     inputs_data = im_data[counter:]
+                    
                 base_feat = self.fasterRCNN.RCNN_base(inputs_data)
                 print(f"base_feat.device: {base_feat.device}")
-                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
+                
+                if counter <= int(im_data.shape[0] / 2): 
+                    FINAL_BASE_FEATURES_0 = torch.cat((FINAL_BASE_FEATURES_0, base_feat), 0)
+                else:
+                    FINAL_BASE_FEATURES_1 = torch.cat((FINAL_BASE_FEATURES_1, base_feat), 0)
+                    
                 counter += self.batch_size
 
             # FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
-            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
-            print(f"FINAL_BASE_FEATURES.device: {FINAL_BASE_FEATURES.device}")
+            print(f"FINAL_BASE_FEATURES_0: {FINAL_BASE_FEATURES_0.size()}")
+            print(f"FINAL_BASE_FEATURES_0.device: {FINAL_BASE_FEATURES_0.device}")
+
+            print(f"FINAL_BASE_FEATURES_1: {FINAL_BASE_FEATURES_1.size()}")
+            print(f"FINAL_BASE_FEATURES_1.device: {FINAL_BASE_FEATURES_1.device}")
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
-            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
-            print(f"FINAL_BBOXES.device: {FINAL_BBOXES.device}")
 
-            FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
-            print(f"FINAL_FEATURES (roi_align): {FINAL_FEATURES.size()}")
-            print(f"FINAL_FEATURES.device: {FINAL_FEATURES.device}")
+            FINAL_BBOXES_0 = FINAL_BBOXES[:len(FINAL_BASE_FEATURES_0)]
+            print(f"FINAL_BBOXES_0: {FINAL_BBOXES_0.size()}")
+            print(f"FINAL_BBOXES_0.device: {FINAL_BBOXES_0.device}")
+            
+            FINAL_BBOXES_1 = FINAL_BBOXES[len(FINAL_BASE_FEATURES_0):]
+            print(f"FINAL_BBOXES_1: {FINAL_BBOXES_1.size()}")
+            print(f"FINAL_BBOXES_1.device: {FINAL_BBOXES_1.device}")
+            
+            FINAL_FEATURES_0 = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES_0, FINAL_BBOXES_0)
+            print(f"FINAL_FEATURES_0 (roi_align): {FINAL_FEATURES_0.size()}")
+            print(f"FINAL_FEATURES_0.device: {FINAL_FEATURES_0.device}")
+            
+            FINAL_FEATURES_1 = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES_1, FINAL_BBOXES_1)
+            print(f"FINAL_FEATURES_1 (roi_align): {FINAL_FEATURES_1.size()}")
+            print(f"FINAL_FEATURES_1.device: {FINAL_FEATURES_1.device}")
 
-            FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
-            print(f"FINAL_FEATURES (head_to_tail): {FINAL_FEATURES.size()}")
-            print(f"FINAL_FEATURES.device: {FINAL_FEATURES.device}")
+            FINAL_FEATURES_0 = self.fasterRCNN._head_to_tail(FINAL_FEATURES_0)
+            print(f"FINAL_FEATURES_0 (head_to_tail): {FINAL_FEATURES_0.size()}")
+            print(f"FINAL_FEATURES_0.device: {FINAL_FEATURES_0.device}")
+
+            FINAL_FEATURES_1 = self.fasterRCNN._head_to_tail(FINAL_FEATURES_1)
+            print(f"FINAL_FEATURES_1 (head_to_tail): {FINAL_FEATURES_1.size()}")
+            print(f"FINAL_FEATURES_1.device: {FINAL_FEATURES_1.device}")
+
+            FINAL_FEATURES = torch.cat((FINAL_FEATURES_0, FINAL_FEATURES_1), 0).to(self.device)
 
             if self.mode == 'predcls':
                 union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
                                          torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])), 1)
+                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES_0, FINAL_BASE_FEATURES_1), 0).to(self.device)
                 union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
                 print(f"union_feat.device: {union_feat.device}")
 
