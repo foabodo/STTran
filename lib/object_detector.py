@@ -350,16 +350,16 @@ class detector(nn.Module):
             FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
+            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
+            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
             FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
+            print(f"FINAL_FEATURES: {FINAL_FEATURES.size()}")
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
 
             if self.mode == 'predcls':
                 union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
                                          torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])), 1)
                 union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
-
-                FINAL_BASE_FEATURES.to(self.cpu_device)
-                del FINAL_BASE_FEATURES
 
                 FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] / im_info[0, 2]
                 pair_rois = torch.cat((FINAL_BBOXES[pair[:, 0], 1:], FINAL_BBOXES[pair[:, 1], 1:]),
@@ -392,9 +392,6 @@ class detector(nn.Module):
                         (im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
                          torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])), 1)
                     union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
-
-                    FINAL_BASE_FEATURES.to(self.cpu_device)
-                    del FINAL_BASE_FEATURES
 
                     FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] / im_info[0, 2]
                     pair_rois = torch.cat((FINAL_BBOXES[pair[:, 0], 1:], FINAL_BBOXES[pair[:, 1], 1:]),
