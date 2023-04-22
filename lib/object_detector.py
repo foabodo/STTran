@@ -380,15 +380,15 @@ class detector(nn.Module):
             print(f"FINAL_FEATURES_1 (roi_align): {FINAL_FEATURES_1.size()}")
             print(f"FINAL_FEATURES_1.device: {FINAL_FEATURES_1.device}")
 
-            FINAL_FEATURES_0 = self.fasterRCNN._head_to_tail(FINAL_FEATURES_0)
+            FINAL_FEATURES_0 = self.fasterRCNN._head_to_tail(FINAL_FEATURES_0).to(self.device)
             print(f"FINAL_FEATURES_0 (head_to_tail): {FINAL_FEATURES_0.size()}")
             print(f"FINAL_FEATURES_0.device: {FINAL_FEATURES_0.device}")
 
-            FINAL_FEATURES_1 = self.fasterRCNN._head_to_tail(FINAL_FEATURES_1)
+            FINAL_FEATURES_1 = self.fasterRCNN._head_to_tail(FINAL_FEATURES_1).to(self.device)
             print(f"FINAL_FEATURES_1 (head_to_tail): {FINAL_FEATURES_1.size()}")
             print(f"FINAL_FEATURES_1.device: {FINAL_FEATURES_1.device}")
 
-            FINAL_FEATURES = torch.cat((FINAL_FEATURES_0.to(self.device), FINAL_FEATURES_1.to(self.device)), 0)
+            FINAL_FEATURES = torch.cat((FINAL_FEATURES_0, FINAL_FEATURES_1), 0)
 
             if self.mode == 'predcls':
                 union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
