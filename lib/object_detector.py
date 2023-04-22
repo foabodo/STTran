@@ -69,8 +69,6 @@ class detector(nn.Module):
             assert num_boxes is not None
             assert gt_annotation is not None
 
-        cpu_device = torch.device("cpu")
-
         if self.mode == 'sgdet':
             counter = 0
             counter_image = 0
@@ -262,9 +260,6 @@ class detector(nn.Module):
                 union_boxes[:, 1:] = union_boxes[:, 1:] * im_info[0, 2]
                 union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
 
-                FINAL_BASE_FEATURES.to(self.cpu_device)
-                del FINAL_BASE_FEATURES
-
                 pair_rois = torch.cat((FINAL_BBOXES_X[pair[:,0],1:],FINAL_BBOXES_X[pair[:,1],1:]), 1).data.cpu().numpy()
                 spatial_masks = torch.tensor(draw_union_boxes(pair_rois, 27) - 0.5).to(FINAL_FEATURES.device)
 
@@ -334,7 +329,7 @@ class detector(nn.Module):
             im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
 
             counter = 0
-            FINAL_BASE_FEATURES = torch.tensor([]).to(self.cpu_device)
+            FINAL_BASE_FEATURES = torch.tensor([]).to(self.device)
             # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             while counter < im_data.shape[0]:
@@ -344,17 +339,20 @@ class detector(nn.Module):
                 else:
                     inputs_data = im_data[counter:]
                 base_feat = self.fasterRCNN.RCNN_base(inputs_data)
-                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat.to(self.cpu_device)), 0)
+                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
                 counter += self.batch_size
 
-            FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
+            # FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
+            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
-            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
             print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
+
             FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
-            print(f"FINAL_FEATURES: {FINAL_FEATURES.size()}")
+            print(f"FINAL_FEATURES (roi_align): {FINAL_FEATURES.size()}")
+
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
+            print(f"FINAL_FEATURES (head_to_tail): {FINAL_FEATURES.size()}")
 
             if self.mode == 'predcls':
                 union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
