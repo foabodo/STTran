@@ -11,12 +11,12 @@ iou_threshold: 0.5
 constraint: 'semi'  # with/semi/no
 semithreshold: 0.9
 
-batch_size: 5
+batch_size: 3
 num_sets_of_boxes: 4
 youtube_dl_format: 134
 frame_resize_width: 480
 frame_resize_height: 360
-fps: 5
+fps: 1
 
 data_path: ""
 word_vec_dim: 200
