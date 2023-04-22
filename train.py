@@ -155,14 +155,19 @@ for epoch in range(int(conf.nepoch)):
 
         print(f"GT_ANNOTATION_LEN: {num_gt_annotations}")
 
-        # we can't fit too many bboxes in GPU ram at the same time
-        if num_gt_annotations >= 3625:
-            continue
+        # # we can't fit too many bboxes in GPU ram at the same time
+        # if num_gt_annotations >= 3625:
+        #     continue
 
         im_data = copy.deepcopy(data[0]).to(object_detector_device)
         im_info = copy.deepcopy(data[1]).to(object_detector_device)
         gt_boxes = copy.deepcopy(data[2]).to(object_detector_device)
         num_boxes = copy.deepcopy(data[3]).to(object_detector_device)
+
+        print(f"im_data.shape: {im_data.size()}")
+        print(f"im_info.shape: {im_info.size()}")
+        print(f"gt_boxes.shape: {gt_boxes.size()}")
+        print(f"num_boxes.shape: {num_boxes.size()}")
 
         # prevent gradients to FasterRCNN
         with torch.no_grad():
