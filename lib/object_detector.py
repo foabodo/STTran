@@ -349,9 +349,9 @@ class detector(nn.Module):
                 print(f"base_feat.device: {base_feat.device}")
                 
                 if counter <= int(im_data.shape[0] / 2): 
-                    FINAL_BASE_FEATURES_0 = torch.cat((FINAL_BASE_FEATURES_0, base_feat), 0)
+                    FINAL_BASE_FEATURES_0 = torch.cat((FINAL_BASE_FEATURES_0, base_feat.to(torch.device("cuda:2"))), 0)
                 else:
-                    FINAL_BASE_FEATURES_1 = torch.cat((FINAL_BASE_FEATURES_1, base_feat), 0)
+                    FINAL_BASE_FEATURES_1 = torch.cat((FINAL_BASE_FEATURES_1, base_feat.to(torch.device("cuda:3"))), 0)
                     
                 counter += self.batch_size
 
