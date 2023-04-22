@@ -156,7 +156,7 @@ for epoch in range(conf.nepoch):
         print(f"GT_ANNOTATION_LEN: {num_gt_annotations}")
 
         # we can't fit too many bboxes in GPU ram at the same time
-        if num_gt_annotations >= 4248 or num_gt_annotations <= 3980:
+        if num_gt_annotations >= 4000:
             continue
 
         im_data = copy.deepcopy(data[0]).to(object_detector_device)
@@ -170,18 +170,18 @@ for epoch in range(conf.nepoch):
 
         entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
 
-        # Try to avoid GPU OOM
-        im_data.to(cpu_device)
-        im_info.to(cpu_device)
-        gt_boxes.to(cpu_device)
-        num_boxes.to(cpu_device)
-
-        del im_data
-        del im_info
-        del gt_boxes
-        del num_boxes
-
-        torch.cuda.empty_cache()
+        # # Try to avoid GPU OOM
+        # im_data.to(cpu_device)
+        # im_info.to(cpu_device)
+        # gt_boxes.to(cpu_device)
+        # num_boxes.to(cpu_device)
+        #
+        # del im_data
+        # del im_info
+        # del gt_boxes
+        # del num_boxes
+        #
+        # torch.cuda.empty_cache()
 
         pred = model(entry)
 
@@ -236,9 +236,9 @@ for epoch in range(conf.nepoch):
             print(mn)
             start = time.time()
 
-        del pred
-
-        torch.cuda.empty_cache()
+        # del pred
+        #
+        # torch.cuda.empty_cache()
 
     torch.save({"state_dict": model.state_dict()}, os.path.join(conf.save_path, "model_{}.tar".format(epoch)))
     print("*" * 40)
