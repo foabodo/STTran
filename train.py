@@ -189,7 +189,7 @@ for epoch in range(int(conf.nepoch)):
                 'labels': torch.tensor([], dtype=torch.int64).to(sttran_device),  # here is the groundtruth
                 'scores': torch.tensor([], dtype=torch.float32).to(sttran_device),
                 'im_idx': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'pair_idx': [],
+                'pair_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
                 'human_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
                 'features': torch.tensor([], dtype=torch.float32).to(sttran_device),
                 'union_feat': torch.tensor([], dtype=torch.float32).to(sttran_device),
