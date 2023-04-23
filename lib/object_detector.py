@@ -406,7 +406,7 @@ class detector(nn.Module):
                 bboxes = FINAL_BBOXES[:end_index]
                 print(f"bboxes: [{bboxes.size()}]")
 
-                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, bboxes)
+                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, bboxes[start_index:])
                 print(f"roi_align: [{roi_align.size()}]")
 
                 FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
@@ -441,6 +441,7 @@ class detector(nn.Module):
                             ), 1)
                     # union_box = union_boxes[start_index:end_index].clone().detach()
                     union_boxes = torch.cat((union_boxes, union_box), 0)
+
                     union_feat = torch.cat((union_feat, self.fasterRCNN.RCNN_roi_align(base_feat, union_box)))
                 # FINAL_BASE_FEATURES_LIST.append(base_feat)
 
