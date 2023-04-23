@@ -385,6 +385,7 @@ class detector(nn.Module):
             final_feature_index = 0
 
             while counter < im_data.shape[0]:
+                print(f"FINAL_FEATURES: [{FINAL_FEATURES.size()}]")
                 #compute 10 images in batch and  collect all frames data in the video
                 if counter + self.batch_size < im_data.shape[0]:
                     counter_limit = counter + self.batch_size
@@ -403,7 +404,10 @@ class detector(nn.Module):
                 bboxes = FINAL_BBOXES[start_index:end_index]
                 print(f"bboxes: [{bboxes.size()}]")
 
-                FINAL_FEATURES = torch.cat((FINAL_FEATURES, self.fasterRCNN.RCNN_roi_align(base_feat, bboxes)), 0)
+                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, bboxes)
+                print(f"roi_align: [{roi_align.size()}]")
+
+                FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
 
                 if self.mode == 'predcls':
                     print(f"pair: [{pair.size()}]")
