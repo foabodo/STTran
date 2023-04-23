@@ -380,11 +380,11 @@ class detector(nn.Module):
                          'target_gt': t_rel
                         }
 
-                for k, v in entry.items():
-                    if isinstance(v, torch.Tensor):
-                        print(f"{k}: {type(v)}, {v.size()}")
-                    else:
-                        print(f"{k}: {type(v)}, {len(v)}, {type(v[0])}, {len(v[0])}")
+                # for k, v in entry.items():
+                #     if isinstance(v, torch.Tensor):
+                #         print(f"{k}: {type(v)}, {v.size()}")
+                #     else:
+                #         print(f"{k}: {type(v)}, {len(v)}, {type(v[0])}, {len(v[0])}")
 
                 return entry
             elif self.mode == 'sgcls':

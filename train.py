@@ -218,8 +218,8 @@ for epoch in range(int(conf.nepoch)):
                     k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
                     else entries[k] + v for k, v in entry.items()
                 }
-                # print(f"entries source_gt: {entries['source_gt']}")
-                # print(f"entries target_gt: {entries['target_gt']}")
+                print(f"entries source_gt: {[len(e) for e in entries['source_gt']]}")
+                print(f"entries target_gt: {[len(e) for e in entries['target_gt']]}")
 
         pred = model(entries)
 
