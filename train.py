@@ -185,16 +185,16 @@ for epoch in range(int(conf.nepoch)):
         # prevent gradients to FasterRCNN
         with torch.no_grad():
             entries = {
-                'boxes': torch.tensor([]).to(sttran_device),
-                'labels': torch.tensor([]).to(sttran_device),  # here is the groundtruth
-                'scores': torch.tensor([]).to(sttran_device),
-                'im_idx': torch.tensor([]).to(sttran_device),
-                'pair_idx': torch.tensor([]).to(sttran_device),
-                'human_idx': torch.tensor([]).to(sttran_device),
-                'features': torch.tensor([]).to(sttran_device),
-                'union_feat': torch.tensor([]).to(sttran_device),
-                'union_box': torch.tensor([]).to(sttran_device),
-                'spatial_masks': torch.tensor([]).to(sttran_device),
+                'boxes': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'labels': torch.tensor([], dtype=torch.int64).to(sttran_device),  # here is the groundtruth
+                'scores': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'im_idx': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'pair_idx': [],
+                'human_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
+                'features': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'union_feat': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'union_box': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'spatial_masks': torch.tensor([], dtype=torch.float32).to(sttran_device),
                 'source_gt': [],
                 'target_gt': []
              }
