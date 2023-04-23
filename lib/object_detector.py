@@ -408,7 +408,7 @@ class detector(nn.Module):
                 bboxes = FINAL_BBOXES[:end_index]
                 print(f"bboxes: [{bboxes.size()}]")
 
-                roi_boxes = bboxes[start_index:].to(self.device)
+                roi_boxes = bboxes[start_index:].clone().detach().to(self.device)
                 print(f"roi_boxes: [{roi_boxes.size()}]")
 
                 roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, roi_boxes)
@@ -443,7 +443,7 @@ class detector(nn.Module):
                                           min_bboxes[min_pair_idx_1]),
                                 torch.max(max_bboxes[max_pair_idx_0],
                                           max_bboxes[max_pair_idx_1])
-                            ), 1)
+                            ), 1).to(self.device)
                     # union_box = union_boxes[start_index:end_index].clone().detach()
                     union_boxes = torch.cat((union_boxes, union_box), 0)
 
