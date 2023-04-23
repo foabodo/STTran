@@ -374,7 +374,8 @@ class detector(nn.Module):
 
             if self.mode == 'predcls':
                 union_boxes = torch.cat((
-                    im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
+                    im_idx[:, None],
+                    torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
                     torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])
                 ), 1)
                 print(f"union_boxes: {union_boxes.size()}")
@@ -388,12 +389,11 @@ class detector(nn.Module):
 
                 union_boxes_list = []
                 start_index = 0
-                for i in range(len(FINAL_BBOXES_LIST)):
-                    bboxes = FINAL_BBOXES_LIST[i]
+                for bboxes in FINAL_BBOXES_LIST:
                     end_index = start_index + len(bboxes)
                     union_boxes_list.append(
                         torch.cat((
-                            im_idx[:, None],
+                            im_idx[start_index:end_index, None],
                             torch.min(bboxes[:, 1:3][pair[start_index:end_index, 0]],
                                       bboxes[:, 1:3][pair[start_index:end_index, 1]]),
                             torch.max(bboxes[:, 3:5][pair[start_index:end_index, 0]],
