@@ -383,7 +383,6 @@ class detector(nn.Module):
             counter = 0
             start_index = 0
             final_feature_index = 0
-            last_pair_idx = 0
 
             while counter < im_data.shape[0]:
                 print(f"FINAL_FEATURES: [{FINAL_FEATURES.size()}]")
@@ -396,11 +395,11 @@ class detector(nn.Module):
                 end_index = start_index + sum(len(anno) for anno in gt_annotation[counter:counter_limit])
                 print(f"[start_index:end_index]: [{start_index}:{end_index}]")
 
-                inputs_data = im_data[counter:counter_limit]
+                inputs_data = im_data[counter:counter_limit].clone().detach().to(self.device)
                 print(f"[counter:counter_limit]: [{counter}:{counter_limit}]")
                 print(f"inputs_data: [{inputs_data.size()}]")
                     
-                base_feat = self.fasterRCNN.RCNN_base(inputs_data)
+                base_feat = self.fasterRCNN.RCNN_base(inputs_data).clone().detach().to(self.device)
                 print(f"base_feat: [{base_feat.size()}]")
                 # FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
 
@@ -411,7 +410,7 @@ class detector(nn.Module):
                 roi_boxes = bboxes[start_index:].clone().detach().to(self.device)
                 print(f"roi_boxes: [{roi_boxes.size()}]")
 
-                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, roi_boxes)
+                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, roi_boxes).clone().detach().to(self.device)
                 print(f"roi_align: [{roi_align.size()}]")
 
                 FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
@@ -434,8 +433,6 @@ class detector(nn.Module):
                     print(f"max_pair_idx_0: [{max_pair_idx_0}]")
                     max_pair_idx_1 = pair[counter:counter_limit, 1]
                     print(f"max_pair_idx_1: [{max_pair_idx_1}]")
-
-                    last_pair_idx += max_pair_idx_1[-1]
 
                     union_box = torch.cat((
                                 im_idx[counter:counter_limit, None],
