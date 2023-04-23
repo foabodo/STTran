@@ -375,7 +375,8 @@ class detector(nn.Module):
             for i in range(len(FINAL_BBOXES_LIST)):
                 features = FINAL_BASE_FEATURES_LIST[i].to(self.device)
                 bboxes = FINAL_BBOXES_LIST[i]
-                FINAL_FEATURES_LIST.append(self.fasterRCNN.RCNN_roi_align(features, bboxes))
+                _ = self.fasterRCNN.RCNN_roi_align(features, bboxes)
+                FINAL_FEATURES_LIST.append(_)
 
             # FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
 
