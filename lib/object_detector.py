@@ -383,6 +383,7 @@ class detector(nn.Module):
             counter = 0
             start_index = 0
             final_feature_index = 0
+            last_pair_idx = 0
 
             while counter < im_data.shape[0]:
                 print(f"FINAL_FEATURES: [{FINAL_FEATURES.size()}]")
@@ -417,17 +418,19 @@ class detector(nn.Module):
 
                     min_bboxes = bboxes[:, 1:3]
                     print(f"min_bboxes: [{min_bboxes.size()}]")
-                    min_pair_idx_0 = pair[counter:counter_limit, 0] - start_index
+                    min_pair_idx_0 = pair[counter:counter_limit, 0] - last_pair_idx
                     print(f"min_pair_idx_0: [{min_pair_idx_0}]")
-                    min_pair_idx_1 = pair[counter:counter_limit, 1] - start_index
+                    min_pair_idx_1 = pair[counter:counter_limit, 1] - last_pair_idx
                     print(f"min_pair_idx_1: [{min_pair_idx_1}]")
 
                     max_bboxes = bboxes[:, 3:5]
                     print(f"max_bboxes: [{max_bboxes.size()}]")
-                    max_pair_idx_0 = pair[counter:counter_limit, 0] - start_index
+                    max_pair_idx_0 = pair[counter:counter_limit, 0] - last_pair_idx
                     print(f"max_pair_idx_0: [{max_pair_idx_0}]")
-                    max_pair_idx_1 = pair[counter:counter_limit, 1] - start_index
+                    max_pair_idx_1 = pair[counter:counter_limit, 1] - last_pair_idx
                     print(f"max_pair_idx_1: [{max_pair_idx_1}]")
+
+                    last_pair_idx += max_pair_idx_1[-1]
 
                     union_box = torch.cat((
                                 im_idx[counter:counter_limit, None],
