@@ -373,10 +373,22 @@ class detector(nn.Module):
             FINAL_FEATURES = torch.cat(FINAL_FEATURES_LIST)
 
             if self.mode == 'predcls':
+                _im_idx = im_idx[:, None]
+                print(f"_im_idx: {_im_idx.size()}")
+
+                min_arg_1 = FINAL_BBOXES[:, 1:3][pair[:, 0]]
+                print(f"min_arg_1: {min_arg_1.size()}")
+                min_arg_2 = FINAL_BBOXES[:, 1:3][pair[:, 1]]
+                print(f"min_arg_2: {min_arg_2.size()}")
+                max_arg_1 = FINAL_BBOXES[:, 3:5][pair[:, 0]]
+                print(f"max_arg_1: {max_arg_1.size()}")
+                max_arg_2 = FINAL_BBOXES[:, 3:5][pair[:, 1]]
+                print(f"max_arg_2: {max_arg_2.size()}")
+
                 union_boxes = torch.cat((
                     im_idx[:, None],
-                    torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
-                    torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])
+                    torch.min(min_arg_1, min_arg_2),
+                    torch.max(max_arg_1, max_arg_2)
                 ), 1)
                 print(f"union_boxes: {union_boxes.size()}")
 
@@ -391,6 +403,18 @@ class detector(nn.Module):
                 start_index = 0
                 for bboxes in FINAL_BBOXES_LIST:
                     end_index = start_index + len(bboxes)
+                    _im_idx = im_idx[start_index:end_index, None]
+                    print(f"_im_idx: {_im_idx.size()}")
+
+                    min_arg_1 = FINAL_BBOXES[:, 1:3][pair[:, 0]]
+                    print(f"min_arg_1: {min_arg_1.size()}")
+                    min_arg_2 = FINAL_BBOXES[:, 1:3][pair[:, 1]]
+                    print(f"min_arg_2: {min_arg_2.size()}")
+                    max_arg_1 = FINAL_BBOXES[:, 3:5][pair[:, 0]]
+                    print(f"max_arg_1: {max_arg_1.size()}")
+                    max_arg_2 = FINAL_BBOXES[:, 3:5][pair[:, 1]]
+                    print(f"max_arg_2: {max_arg_2.size()}")
+
                     union_boxes_list.append(
                         torch.cat((
                             im_idx[start_index:end_index, None],
