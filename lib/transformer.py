@@ -150,6 +150,8 @@ class transformer(nn.Module):
 
         # sliding window size = 2
         for j in range(b - 1):
+            print(f"global_input[:torch.sum((im_idx == j) + (im_idx == j + 1)), j, :]: {global_input[:torch.sum((im_idx == j) + (im_idx == j + 1)), j, :].size()}")
+            print(f"local_output[(im_idx == j) + (im_idx == j + 1)]: {local_output[(im_idx == j) + (im_idx == j + 1)].size()}")
             global_input[:torch.sum((im_idx == j) + (im_idx == j + 1)), j, :] = local_output[(im_idx == j) + (im_idx == j + 1)]
             idx[:torch.sum((im_idx == j) + (im_idx == j + 1)), j] = im_idx[(im_idx == j) + (im_idx == j + 1)]
             idx_plus[:torch.sum((im_idx == j) + (im_idx == j + 1)), j] = rel_idx[(im_idx == j) + (im_idx == j + 1)] #TODO
