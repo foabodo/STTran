@@ -356,7 +356,7 @@ class detector(nn.Module):
             for i in range(0, len(gt_annotation), self.batch_size):
                 limit = i + self.batch_size if i + self.batch_size < len(gt_annotation) else len(gt_annotation)
                 end_index = sum(len(anno) for anno in gt_annotation[i:limit])
-                print(f"[start_index:end_index]: [{start_index}:{end_index}]")
+                print(f"[start_index:end_index]: [{start_index}:{end_index}], limit: {limit}")
                 FINAL_BBOXES_LIST.append(FINAL_BBOXES[start_index:end_index])
                 start_index = end_index
 
