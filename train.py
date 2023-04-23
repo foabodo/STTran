@@ -181,7 +181,20 @@ for epoch in range(int(conf.nepoch)):
 
         print(f"total range: {ranges[0][0]} - {ranges[-1][1]}")
         print(f"ranges: {ranges}")
-        entries = None
+        entries = {
+            'boxes': torch.tensor([]).to(sttran_device),
+            'labels': torch.tensor([]).to(sttran_device),  # here is the groundtruth
+            'scores': torch.tensor([]).to(sttran_device),
+            'im_idx': torch.tensor([]).to(sttran_device),
+            'pair_idx': torch.tensor([]).to(sttran_device),
+            'human_idx': torch.tensor([]).to(sttran_device),
+            'features': torch.tensor([]).to(sttran_device),
+            'union_feat': torch.tensor([]).to(sttran_device),
+            'union_box': torch.tensor([]).to(sttran_device),
+            'spatial_masks': torch.tensor([]).to(sttran_device),
+            'source_gt': [],
+            'target_gt': []
+         }
 
         # prevent gradients to FasterRCNN
         with torch.no_grad():
@@ -195,13 +208,13 @@ for epoch in range(int(conf.nepoch)):
                     im_all=None
                 )
 
-                if entries is None:
-                    entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
-                else:
-                    entries = {
-                        k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
-                        else entries[k].extend(v) for k, v in entry.items()
-                    }
+                # if entries is None:
+                #     entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
+                # else:
+                entries = {
+                    k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
+                    else entries[k].extend(v) for k, v in entry.items()
+                }
 
         pred = model(entries)
 
