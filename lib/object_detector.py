@@ -331,7 +331,6 @@ class detector(nn.Module):
 
             counter = 0
             FINAL_BASE_FEATURES = torch.tensor([]).to(self.device)
-            # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             while counter < im_data.shape[0]:
                 #compute 10 images in batch and  collect all frames data in the video
@@ -344,17 +343,9 @@ class detector(nn.Module):
                 FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
                 counter += self.batch_size
 
-            # FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
-            # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
-
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
-            # print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
-
             FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
-            # print(f"FINAL_FEATURES (roi_align): {FINAL_FEATURES.size()}")
-
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
-            # print(f"FINAL_FEATURES (head_to_tail): {FINAL_FEATURES.size()}")
 
             if self.mode == 'predcls':
                 union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
@@ -365,8 +356,6 @@ class detector(nn.Module):
                 pair_rois = torch.cat((FINAL_BBOXES[pair[:, 0], 1:], FINAL_BBOXES[pair[:, 1], 1:]),
                                       1).data.cpu().numpy()
                 spatial_masks = torch.tensor(draw_union_boxes(pair_rois, 27) - 0.5).to(FINAL_FEATURES.device)
-
-                print(f"im_idx type: {im_idx[0]}")
 
                 entry = {'boxes': FINAL_BBOXES,
                          'labels': FINAL_LABELS, # here is the groundtruth
@@ -381,12 +370,6 @@ class detector(nn.Module):
                          'source_gt': s_rel,
                          'target_gt': t_rel
                         }
-
-                # for k, v in entry.items():
-                #     if isinstance(v, torch.Tensor):
-                #         print(f"{k}: {type(v)}, {v.size()}")
-                #     else:
-                #         print(f"{k}: {type(v)}, {len(v)}, {type(v[0])}, {len(v[0])}")
 
                 return entry
             elif self.mode == 'sgcls':
