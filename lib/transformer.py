@@ -129,11 +129,15 @@ class transformer(nn.Module):
 
     def forward(self, features, im_idx):
         rel_idx = torch.arange(im_idx.shape[0])
+        print(f"rel_idx: {rel_idx.size()}")
 
         l = torch.sum(im_idx == torch.mode(im_idx)[0])  # the highest box number in the single frame
         b = int(im_idx[-1] + 1)
         rel_input = torch.zeros([l, b, features.shape[1]]).to(features.device)
+        print(f"rel_input: {rel_input.size()}")
+
         masks = torch.zeros([b, l], dtype=torch.uint8).to(features.device)
+        print(f"masks: {masks.size()}")
         # TODO Padding/Mask maybe don't need for-loop
         for i in range(b):
             rel_input[:torch.sum(im_idx == i), i, :] = features[im_idx == i]
@@ -141,7 +145,9 @@ class transformer(nn.Module):
 
         # spatial encoder
         local_output, local_attention_weights = self.local_attention(rel_input, masks)
+        print(f"local_output(0): {local_output.size()}")
         local_output = (local_output.permute(1, 0, 2)).contiguous().view(-1, features.shape[1])[masks.view(-1) == 0]
+        print(f"local_output(1): {local_output.size()}")
 
         global_input = torch.zeros([l * 2, b - 1, features.shape[1]]).to(features.device)
         position_embed = torch.zeros([l * 2, b - 1, features.shape[1]]).to(features.device)
