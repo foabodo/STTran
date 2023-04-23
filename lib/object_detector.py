@@ -360,7 +360,7 @@ class detector(nn.Module):
 
             if self.mode == 'predcls':
                 union_feat = torch.tensor([], dtype=torch.float32).to(self.device)
-
+                union_boxes = torch.tensor([], dtype=torch.float32).to(self.device)
                 # _im_idx = im_idx[:, None]
                 # print(f"_im_idx: {_im_idx.size()}")
                 #
