@@ -410,16 +410,16 @@ class detector(nn.Module):
 
                     min_bboxes = bboxes[:, 1:3]
                     print(f"min_bboxes: [{min_bboxes.size()}]")
-                    min_pair_idx_0 = pair[counter:counter_limit, 0]
+                    min_pair_idx_0 = pair[start_index:end_index, 0]
                     print(f"min_pair_idx_0: [{min_pair_idx_0}]")
-                    min_pair_idx_1 = pair[counter:counter_limit, 1]
+                    min_pair_idx_1 = pair[start_index:end_index, 1]
                     print(f"min_pair_idx_1: [{min_pair_idx_1}]")
 
                     max_bboxes = bboxes[:, 3:5]
                     print(f"max_bboxes: [{max_bboxes.size()}]")
-                    max_pair_idx_0 = pair[counter:counter_limit, 0]
+                    max_pair_idx_0 = pair[start_index:end_index, 0]
                     print(f"max_pair_idx_0: [{max_pair_idx_0}]")
-                    max_pair_idx_1 = pair[counter:counter_limit, 1]
+                    max_pair_idx_1 = pair[start_index:end_index, 1]
                     print(f"max_pair_idx_1: [{max_pair_idx_1}]")
 
                     union_box = torch.cat((
