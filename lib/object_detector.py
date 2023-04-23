@@ -360,7 +360,25 @@ class detector(nn.Module):
 
             if self.mode == 'predcls':
                 union_feat = torch.tensor([], dtype=torch.float32).to(self.device)
-                union_boxes = torch.tensor([], dtype=torch.float32).to(self.device)
+
+                _im_idx = im_idx[:, None]
+                print(f"_im_idx: {_im_idx.size()}")
+
+                min_arg_1 = FINAL_BBOXES[:, 1:3][pair[:, 0]]
+                print(f"min_arg_1: {min_arg_1.size()}")
+                min_arg_2 = FINAL_BBOXES[:, 1:3][pair[:, 1]]
+                print(f"min_arg_2: {min_arg_2.size()}")
+                max_arg_1 = FINAL_BBOXES[:, 3:5][pair[:, 0]]
+                print(f"max_arg_1: {max_arg_1.size()}")
+                max_arg_2 = FINAL_BBOXES[:, 3:5][pair[:, 1]]
+                print(f"max_arg_2: {max_arg_2.size()}")
+
+                union_boxes = torch.cat((
+                    im_idx[:, None],
+                    torch.min(min_arg_1, min_arg_2),
+                    torch.max(max_arg_1, max_arg_2)
+                ), 1)
+                print(f"union_boxes: {union_boxes.size()}")
 
             counter = 0
             start_index = 0
@@ -385,15 +403,16 @@ class detector(nn.Module):
                 FINAL_FEATURES = torch.cat((FINAL_FEATURES, self.fasterRCNN.RCNN_roi_align(base_feat, bboxes)), 0)
 
                 if self.mode == 'predcls':
-                    union_box = torch.cat((
-                                im_idx[start_index:end_index, None],
-                                torch.min(bboxes[:, 1:3][pair[start_index:end_index, 0]],
-                                          bboxes[:, 1:3][pair[start_index:end_index, 1]]),
-                                torch.max(bboxes[:, 3:5][pair[start_index:end_index, 0]],
-                                          bboxes[:, 3:5][pair[start_index:end_index, 1]])
-                            ), 1)
+                    # union_box = torch.cat((
+                    #             im_idx[start_index:end_index, None],
+                    #             torch.min(bboxes[:, 1:3][pair[start_index:end_index, 0]],
+                    #                       bboxes[:, 1:3][pair[start_index:end_index, 1]]),
+                    #             torch.max(bboxes[:, 3:5][pair[start_index:end_index, 0]],
+                    #                       bboxes[:, 3:5][pair[start_index:end_index, 1]])
+                    #         ), 1)
+                    union_box = union_boxes[start_index:end_index]
                     union_feat = torch.cat((union_feat, self.fasterRCNN.RCNN_roi_align(base_feat, union_box)))
-                    union_boxes = torch.cat((union_boxes, union_box), 0)
+                    # union_boxes = torch.cat((union_boxes, union_box), 0)
                 # FINAL_BASE_FEATURES_LIST.append(base_feat)
 
                 counter += self.batch_size
