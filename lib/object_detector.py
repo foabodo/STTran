@@ -329,132 +329,167 @@ class detector(nn.Module):
             pair = torch.tensor(pair).to(self.device)
             im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
 
-            counter = 0
+            # FINAL_BBOXES_LIST = []
+            #
+            # start_index = 0
+            # for i in range(0, len(gt_annotation), self.batch_size):
+            #     limit = i + self.batch_size if i + self.batch_size < len(gt_annotation) else len(gt_annotation)
+            #     end_index = start_index + sum(len(anno) for anno in gt_annotation[i:limit])
+            #     print(f"[start_index:end_index]: [{start_index}:{end_index}], limit: {limit}")
+            #     FINAL_BBOXES_LIST.append(FINAL_BBOXES[start_index:end_index])
+            #     start_index = end_index
+            #
+            # print(f"FINAL_BBOXES_LIST: {len(FINAL_BBOXES_LIST)}")
+            # print(f"FINAL_BBOXES_LIST: {sum([b.size()[0] for b in FINAL_BBOXES_LIST])}")
+            # print(f"FINAL_BBOXES_LIST: {[b.size() for b in FINAL_BBOXES_LIST]}")
+            # print(f"FINAL_BBOXES_LIST: {[b.device for b in FINAL_BBOXES_LIST]}")
+            # print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
+
+            FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
+            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
+
             # FINAL_BASE_FEATURES = torch.tensor([]).to(self.device)
-            FINAL_BASE_FEATURES_LIST = []
+            # FINAL_BASE_FEATURES_LIST = []
+
+            # FINAL_FEATURES_LIST = []
+
+            FINAL_FEATURES = torch.tensor([], dtype=torch.float32).to(self.device)
+
+            union_feat = None
+            union_boxes = None
+
+            if self.mode == 'predcls':
+                union_feat = torch.tensor([], dtype=torch.float32).to(self.device)
+                union_boxes = torch.tensor([], dtype=torch.float32).to(self.device)
+
+            counter = 0
+            start_index = 0
 
             while counter < im_data.shape[0]:
                 #compute 10 images in batch and  collect all frames data in the video
                 if counter + self.batch_size < im_data.shape[0]:
                     inputs_data = im_data[counter:counter + self.batch_size]
+                    end_index = start_index + sum(len(anno) for anno in gt_annotation[counter:counter + self.batch_size])
                 else:
                     inputs_data = im_data[counter:]
+                    end_index = start_index + sum(len(anno) for anno in gt_annotation[counter:])
+
+                print(f"[start_index:end_index]: [{start_index}:{end_index}]")
                     
                 base_feat = self.fasterRCNN.RCNN_base(inputs_data)
                 # FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
-                FINAL_BASE_FEATURES_LIST.append(base_feat.to(self.cpu_device))
+
+                # shift roi_align operation up into itarator over base feats so not all base feats need to be stored
+                bboxes = FINAL_BBOXES[start_index:end_index]
+
+                FINAL_FEATURES = torch.cat((FINAL_FEATURES, self.fasterRCNN.RCNN_roi_align(base_feat, bboxes)), 0)
+
+                if self.mode == 'predcls':
+                    union_box = torch.cat((
+                                im_idx[start_index:end_index, None],
+                                torch.min(bboxes[:, 1:3][pair[start_index:end_index, 0]],
+                                          bboxes[:, 1:3][pair[start_index:end_index, 1]]),
+                                torch.max(bboxes[:, 3:5][pair[start_index:end_index, 0]],
+                                          bboxes[:, 3:5][pair[start_index:end_index, 1]])
+                            ), 1)
+                    union_feat = torch.cat((union_feat, self.fasterRCNN.RCNN_roi_align(base_feat, union_box)))
+                    union_boxes = torch.cat((union_boxes, union_box), 0)
+                # FINAL_BASE_FEATURES_LIST.append(base_feat)
+
                 counter += self.batch_size
-            # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
-            print(f"FINAL_BASE_FEATURES_LIST: {len(FINAL_BASE_FEATURES_LIST)}")
-            print(f"FINAL_BASE_FEATURES_LIST: {sum([b.size()[0] for b in FINAL_BASE_FEATURES_LIST])}")
-            print(f"FINAL_BASE_FEATURES_LIST: {[b.size() for b in FINAL_BASE_FEATURES_LIST]}")
-            print(f"FINAL_BASE_FEATURES_LIST: {[b.device for b in FINAL_BASE_FEATURES_LIST]}")
 
-            FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
-            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
-
-            FINAL_BBOXES_LIST = []
-
-            start_index = 0
-            for i in range(0, len(gt_annotation), self.batch_size):
-                limit = i + self.batch_size if i + self.batch_size < len(gt_annotation) else len(gt_annotation)
-                end_index = start_index + sum(len(anno) for anno in gt_annotation[i:limit])
-                print(f"[start_index:end_index]: [{start_index}:{end_index}], limit: {limit}")
-                FINAL_BBOXES_LIST.append(FINAL_BBOXES[start_index:end_index])
                 start_index = end_index
-
-            print(f"FINAL_BBOXES_LIST: {len(FINAL_BBOXES_LIST)}")
-            print(f"FINAL_BBOXES_LIST: {sum([b.size()[0] for b in FINAL_BBOXES_LIST])}")
-            print(f"FINAL_BBOXES_LIST: {[b.size() for b in FINAL_BBOXES_LIST]}")
-            print(f"FINAL_BBOXES_LIST: {[b.device for b in FINAL_BBOXES_LIST]}")
-            # print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
+            # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
+            # print(f"FINAL_BASE_FEATURES_LIST: {len(FINAL_BASE_FEATURES_LIST)}")
+            # print(f"FINAL_BASE_FEATURES_LIST: {sum([b.size()[0] for b in FINAL_BASE_FEATURES_LIST])}")
+            # print(f"FINAL_BASE_FEATURES_LIST: {[b.size() for b in FINAL_BASE_FEATURES_LIST]}")
+            # print(f"FINAL_BASE_FEATURES_LIST: {[b.device for b in FINAL_BASE_FEATURES_LIST]}")
             # FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
 
-            FINAL_FEATURES_LIST = []
 
-            for i in range(len(FINAL_BBOXES_LIST)):
-                features = copy.deepcopy(FINAL_BASE_FEATURES_LIST[i].to(self.device))
-                bboxes = copy.deepcopy(FINAL_BBOXES_LIST[i])
-                _ = self.fasterRCNN.RCNN_roi_align(features, bboxes)
-                FINAL_FEATURES_LIST.append(_)
-
+            # for i in range(len(FINAL_BBOXES_LIST)):
+            #     features = FINAL_BASE_FEATURES_LIST[i].to(self.device)
+            #     bboxes = FINAL_BBOXES_LIST[i]
+            #     _ = self.fasterRCNN.RCNN_roi_align(features, bboxes)
+            #     FINAL_FEATURES_LIST.append(_)
+            #
             # FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
-
-            FINAL_FEATURES_LIST = [self.fasterRCNN._head_to_tail(features) for features in FINAL_FEATURES_LIST]
-            print(f"FINAL_FEATURES_LIST: {len(FINAL_FEATURES_LIST)}")
-            print(f"FINAL_FEATURES_LIST: {sum([b.size()[0] for b in FINAL_FEATURES_LIST])}")
-            print(f"FINAL_FEATURES_LIST: {[b.size() for b in FINAL_FEATURES_LIST]}")
-
-            FINAL_FEATURES = torch.cat(FINAL_FEATURES_LIST)
+            #
+            # FINAL_FEATURES_LIST = [self.fasterRCNN._head_to_tail(features) for features in FINAL_FEATURES_LIST]
+            # print(f"FINAL_FEATURES_LIST: {len(FINAL_FEATURES_LIST)}")
+            # print(f"FINAL_FEATURES_LIST: {sum([b.size()[0] for b in FINAL_FEATURES_LIST])}")
+            # print(f"FINAL_FEATURES_LIST: {[b.size() for b in FINAL_FEATURES_LIST]}")
+            #
+            # FINAL_FEATURES = torch.cat(FINAL_FEATURES_LIST)
             print(f"FINAL_FEATURES: {len(FINAL_FEATURES)}")
 
             if self.mode == 'predcls':
-                _im_idx = im_idx[:, None]
-                print(f"_im_idx: {_im_idx.size()}")
-
-                min_arg_1 = FINAL_BBOXES[:, 1:3][pair[:, 0]]
-                print(f"min_arg_1: {min_arg_1.size()}")
-                min_arg_2 = FINAL_BBOXES[:, 1:3][pair[:, 1]]
-                print(f"min_arg_2: {min_arg_2.size()}")
-                max_arg_1 = FINAL_BBOXES[:, 3:5][pair[:, 0]]
-                print(f"max_arg_1: {max_arg_1.size()}")
-                max_arg_2 = FINAL_BBOXES[:, 3:5][pair[:, 1]]
-                print(f"max_arg_2: {max_arg_2.size()}")
-
-                union_boxes = torch.cat((
-                    im_idx[:, None],
-                    torch.min(min_arg_1, min_arg_2),
-                    torch.max(max_arg_1, max_arg_2)
-                ), 1)
-                print(f"union_boxes: {union_boxes.size()}")
-
+                # _im_idx = im_idx[:, None]
+                # print(f"_im_idx: {_im_idx.size()}")
+                #
+                # min_arg_1 = FINAL_BBOXES[:, 1:3][pair[:, 0]]
+                # print(f"min_arg_1: {min_arg_1.size()}")
+                # min_arg_2 = FINAL_BBOXES[:, 1:3][pair[:, 1]]
+                # print(f"min_arg_2: {min_arg_2.size()}")
+                # max_arg_1 = FINAL_BBOXES[:, 3:5][pair[:, 0]]
+                # print(f"max_arg_1: {max_arg_1.size()}")
+                # max_arg_2 = FINAL_BBOXES[:, 3:5][pair[:, 1]]
+                # print(f"max_arg_2: {max_arg_2.size()}")
+                #
+                # union_boxes = torch.cat((
+                #     im_idx[:, None],
+                #     torch.min(min_arg_1, min_arg_2),
+                #     torch.max(max_arg_1, max_arg_2)
+                # ), 1)
+                # print(f"union_boxes: {union_boxes.size()}")
+                #
                 # union_boxes_list = [
                 #     torch.cat((
                 #         im_idx[:, None], torch.min(bboxes[:, 1:3][pair[:, 0]], bboxes[:, 1:3][pair[:, 1]]),
                 #         torch.max(bboxes[:, 3:5][pair[:, 0]], bboxes[:, 3:5][pair[:, 1]])
                 #     ), 1) for bboxes in FINAL_BBOXES_LIST
                 # ]
-
-                union_boxes_list = []
-                start_index = 0
-                for bboxes in FINAL_BBOXES_LIST:
-                    end_index = start_index + len(bboxes)
-                    _im_idx = im_idx[start_index:end_index, None]
-                    print(f"_im_idx: {_im_idx.size()}")
-
-                    min_arg_1 = bboxes[:, 1:3][pair[:, 0]]
-                    print(f"min_arg_1: {min_arg_1.size()}")
-                    min_arg_2 = bboxes[:, 1:3][pair[:, 1]]
-                    print(f"min_arg_2: {min_arg_2.size()}")
-                    max_arg_1 = bboxes[:, 3:5][pair[:, 0]]
-                    print(f"max_arg_1: {max_arg_1.size()}")
-                    max_arg_2 = bboxes[:, 3:5][pair[:, 1]]
-                    print(f"max_arg_2: {max_arg_2.size()}")
-
-                    union_boxes_list.append(
-                        torch.cat((
-                            im_idx[start_index:end_index, None],
-                            torch.min(bboxes[:, 1:3][pair[start_index:end_index, 0]],
-                                      bboxes[:, 1:3][pair[start_index:end_index, 1]]),
-                            torch.max(bboxes[:, 3:5][pair[start_index:end_index, 0]],
-                                      bboxes[:, 3:5][pair[start_index:end_index, 1]])
-                        ), 1)
-                    )
-                    start_index = end_index
-
-                print(f"union_boxes_list: {[bboxes.size() for bboxes in union_boxes_list]}")
-                print(f"union_boxes_list: {sum([len(bboxes) for bboxes in union_boxes_list])}")
+                #
+                # union_boxes_list = []
+                # start_index = 0
+                # for bboxes in FINAL_BBOXES_LIST:
+                #     end_index = start_index + len(bboxes)
+                #     _im_idx = im_idx[start_index:end_index, None]
+                #     print(f"_im_idx: {_im_idx.size()}")
+                #
+                #     min_arg_1 = bboxes[:, 1:3][pair[:, 0]]
+                #     print(f"min_arg_1: {min_arg_1.size()}")
+                #     min_arg_2 = bboxes[:, 1:3][pair[:, 1]]
+                #     print(f"min_arg_2: {min_arg_2.size()}")
+                #     max_arg_1 = bboxes[:, 3:5][pair[:, 0]]
+                #     print(f"max_arg_1: {max_arg_1.size()}")
+                #     max_arg_2 = bboxes[:, 3:5][pair[:, 1]]
+                #     print(f"max_arg_2: {max_arg_2.size()}")
+                #
+                #     union_boxes_list.append(
+                #         torch.cat((
+                #             im_idx[start_index:end_index, None],
+                #             torch.min(bboxes[:, 1:3][pair[start_index:end_index, 0]],
+                #                       bboxes[:, 1:3][pair[start_index:end_index, 1]]),
+                #             torch.max(bboxes[:, 3:5][pair[start_index:end_index, 0]],
+                #                       bboxes[:, 3:5][pair[start_index:end_index, 1]])
+                #         ), 1)
+                #     )
+                #     start_index = end_index
+                #
+                # print(f"union_boxes_list: {[bboxes.size() for bboxes in union_boxes_list]}")
+                # print(f"union_boxes_list: {sum([len(bboxes) for bboxes in union_boxes_list])}")
 
                 # union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
                 # print(f"union_feat: {union_feat.size()}")
-
-                union_feat_list = [
-                    self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES_LIST[i], union_boxes_list[i])
-                    for i in range(len(FINAL_BASE_FEATURES_LIST))
-                ]
-                print(f"union_feat_list: {sum([len(bboxes) for bboxes in union_feat_list])}")
-
-                union_feat = torch.cat(union_feat_list)
+                #
+                # union_feat_list = [
+                #     self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES_LIST[i], union_boxes_list[i])
+                #     for i in range(len(FINAL_BASE_FEATURES_LIST))
+                # ]
+                # print(f"union_feat_list: {sum([len(bboxes) for bboxes in union_feat_list])}")
+                #
+                # union_feat = torch.cat(union_feat_list)
 
                 FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] / im_info[0, 2]
                 pair_rois = torch.cat((FINAL_BBOXES[pair[:, 0], 1:], FINAL_BBOXES[pair[:, 1], 1:]),
