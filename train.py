@@ -207,7 +207,7 @@ for epoch in range(int(conf.nepoch)):
                     gt_annotation[i: j],
                     im_all=None
                 )
-                print(f"entry keys: {list(entry.keys())}")
+                print(f"entry keys: {list(key for key in entry.keys() if entry[key] is None)}")
                 # if entries is None:
                 #     entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
                 # else:
