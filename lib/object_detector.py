@@ -406,12 +406,17 @@ class detector(nn.Module):
                 FINAL_FEATURES = torch.cat((FINAL_FEATURES, self.fasterRCNN.RCNN_roi_align(base_feat, bboxes)), 0)
 
                 if self.mode == 'predcls':
+                    print(f"pair: [{pair.size()}]")
+                    min_pair_idx_0 = pair[counter:counter_limit, 0]
+                    min_pair_idx_1 = pair[counter:counter_limit, 1]
+                    max_pair_idx_0 = pair[counter:counter_limit, 0]
+                    max_pair_idx_1 = pair[counter:counter_limit, 1]
                     union_box = torch.cat((
                                 im_idx[start_index:end_index, None],
-                                torch.min(bboxes[:, 1:3][pair[counter:counter_limit, 0]],
-                                          bboxes[:, 1:3][pair[counter:counter_limit, 1]]),
-                                torch.max(bboxes[:, 3:5][pair[counter:counter_limit, 0]],
-                                          bboxes[:, 3:5][pair[counter:counter_limit, 1]])
+                                torch.min(bboxes[:, 1:3][min_pair_idx_0],
+                                          bboxes[:, 1:3][min_pair_idx_1]),
+                                torch.max(bboxes[:, 3:5][max_pair_idx_0],
+                                          bboxes[:, 3:5][max_pair_idx_1])
                             ), 1)
                     # union_box = union_boxes[start_index:end_index].clone().detach()
                     union_boxes = torch.cat((union_boxes, union_box), 0)
