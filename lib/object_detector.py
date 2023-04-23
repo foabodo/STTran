@@ -362,7 +362,7 @@ class detector(nn.Module):
 
             FINAL_FEATURES_LIST = [
                 self.fasterRCNN.RCNN_roi_align(features, bboxes)
-                for (features, bboxes) in zip((FINAL_BASE_FEATURES_LIST, FINAL_BBOXES_LIST))
+                for (features, bboxes) in zip([FINAL_BASE_FEATURES_LIST, FINAL_BBOXES_LIST])
             ]
             # FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
 
@@ -391,7 +391,7 @@ class detector(nn.Module):
 
                 union_feat_list = [
                     self.fasterRCNN.RCNN_roi_align(features, bboxes)
-                    for (features, bboxes) in zip((FINAL_BASE_FEATURES_LIST, union_boxes_list))
+                    for (features, bboxes) in zip([FINAL_BASE_FEATURES_LIST, union_boxes_list])
                 ]
                 print(f"union_feat_list: {sum([len(bboxes) for bboxes in union_feat_list])}")
 
