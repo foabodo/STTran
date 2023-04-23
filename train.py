@@ -170,18 +170,27 @@ for epoch in range(int(conf.nepoch)):
         print(f"gt_boxes.shape: {gt_boxes.size()}")
         print(f"num_boxes.shape: {num_boxes.size()}")
 
-        # prevent gradients to FasterRCNN
+        gt_annotation_lens = [len(anno) for anno in gt_annotation]
+        ranges = []
+        i = 0
+        start_index = 0
+        for i in range(1, len(gt_annotation) + 1):
+            if sum(gt_annotation_lens[start_index:i]) > 1536 or i == len(gt_annotation):
+                ranges.append((start_index, i))
+                start_index = i
+
+        print(f"range: {ranges[0][0]} - {ranges[-1][1]}")
         entries = None
 
+        # prevent gradients to FasterRCNN
         with torch.no_grad():
-            for i in range(0, len(gt_annotation), 1000):
-                limit = i + 1000 if i + 1000 <= len(gt_annotation) else len(gt_annotation)
+            for i, j in ranges:
                 entry = object_detector(
-                    im_data[i: i+limit].to(object_detector_device),
-                    im_info[i: i+limit].to(object_detector_device),
-                    gt_boxes[i: i+limit].to(object_detector_device),
-                    num_boxes[i: i+limit].to(object_detector_device),
-                    gt_annotation[i: i+limit],
+                    im_data[i: j].to(object_detector_device),
+                    im_info[i: j].to(object_detector_device),
+                    gt_boxes[i: j].to(object_detector_device),
+                    num_boxes[i: j].to(object_detector_device),
+                    gt_annotation[i: j],
                     im_all=None
                 )
 
