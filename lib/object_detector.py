@@ -384,7 +384,7 @@ class detector(nn.Module):
                     if isinstance(v, torch.Tensor):
                         print(f"{k}: {type(v)}, {v.size()}")
                     else:
-                        print(f"{k}: {type(v)}, {len(v)}")
+                        print(f"{k}: {type(v)}, {len(v)}, {type(v[0])}, {len(v[0])}")
 
                 return entry
             elif self.mode == 'sgcls':
