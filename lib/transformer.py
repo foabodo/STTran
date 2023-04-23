@@ -150,9 +150,9 @@ class transformer(nn.Module):
 
         # spatial encoder
         local_output, local_attention_weights = self.local_attention(rel_input, masks)
-        # print(f"local_output(0): {local_output.size()}")
+        print(f"local_output(0): {local_output.size()}")
         local_output = (local_output.permute(1, 0, 2)).contiguous().view(-1, features.shape[1])[masks.view(-1) == 0]
-        # print(f"local_output(1): {local_output.size()}")
+        print(f"local_output(1): {local_output.size()}")
 
         global_input = torch.zeros([l * 2, b - 1, features.shape[1]]).to(features.device)
         position_embed = torch.zeros([l * 2, b - 1, features.shape[1]]).to(features.device)
@@ -161,8 +161,8 @@ class transformer(nn.Module):
 
         # sliding window size = 2
         for j in range(b - 1):
-            print(f"global_input[:torch.sum((im_idx == j) + (im_idx == j + 1)), j, :]: {global_input[:torch.sum((im_idx == j) + (im_idx == j + 1)), j, :].size()}")
-            print(f"local_output[(im_idx == j) + (im_idx == j + 1)]: {local_output[(im_idx == j) + (im_idx == j + 1)].size()}")
+            # print(f"global_input[:torch.sum((im_idx == j) + (im_idx == j + 1)), j, :]: {global_input[:torch.sum((im_idx == j) + (im_idx == j + 1)), j, :].size()}")
+            # print(f"local_output[(im_idx == j) + (im_idx == j + 1)]: {local_output[(im_idx == j) + (im_idx == j + 1)].size()}")
             global_input[:torch.sum((im_idx == j) + (im_idx == j + 1)), j, :] = local_output[(im_idx == j) + (im_idx == j + 1)]
             idx[:torch.sum((im_idx == j) + (im_idx == j + 1)), j] = im_idx[(im_idx == j) + (im_idx == j + 1)]
             idx_plus[:torch.sum((im_idx == j) + (im_idx == j + 1)), j] = rel_idx[(im_idx == j) + (im_idx == j + 1)] #TODO

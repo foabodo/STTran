@@ -216,9 +216,23 @@ for epoch in range(int(conf.nepoch)):
                 #     entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
                 # else:
                 entries = {
-                    k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
-                    else entries[k] + v for k, v in entry.items()
+                    'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device))),
+                    'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device))),  # here is the groundtruth
+                    'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device))),
+                    'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device)) + entries['im_idx'][-1]),
+                    'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device))),
+                    'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device))),
+                    'features': torch.cat((entries['features'], entry['features'].to(sttran_device))),
+                    'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device))),
+                    'union_box': torch.cat((entries['union_box'], entry['union_box'].to(sttran_device))),
+                    'spatial_masks': torch.cat((entries['spatial_masks'], entry['spatial_masks'].to(sttran_device))),
+                    'source_gt': [],
+                    'target_gt': []
                 }
+                # entries = {
+                #     k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
+                #     else entries[k] + v for k, v in entry.items()
+                # }
                 print(f"entries im_idx: {entries['im_idx']}")
                 # print(f"entries source_gt: {[len(e) for e in entries['source_gt']]}")
                 # print(f"entries target_gt: {[len(e) for e in entries['target_gt']]}")
