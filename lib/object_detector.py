@@ -348,6 +348,7 @@ class detector(nn.Module):
             print(f"FINAL_BASE_FEATURES_LIST: {len(FINAL_BASE_FEATURES_LIST)}")
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
+            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
 
             FINAL_BBOXES_LIST = []
 
@@ -359,6 +360,7 @@ class detector(nn.Module):
                 start_index = end_index
 
             print(f"FINAL_BBOXES_LIST: {len(FINAL_BBOXES_LIST)}")
+            print(f"FINAL_BBOXES_LIST: {[b.size() for b in FINAL_BBOXES_LIST]}")
             # print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
             # FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
 
@@ -369,8 +371,11 @@ class detector(nn.Module):
             # FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
 
             FINAL_FEATURES_LIST = [self.fasterRCNN._head_to_tail(features) for features in FINAL_FEATURES_LIST]
+            print(f"FINAL_FEATURES_LIST: {len(FINAL_FEATURES_LIST)}")
+            print(f"FINAL_FEATURES_LIST: {[b.size() for b in FINAL_FEATURES_LIST]}")
 
             FINAL_FEATURES = torch.cat(FINAL_FEATURES_LIST)
+            print(f"FINAL_FEATURES: {len(FINAL_FEATURES)}")
 
             if self.mode == 'predcls':
                 _im_idx = im_idx[:, None]
