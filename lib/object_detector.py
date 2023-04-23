@@ -384,6 +384,8 @@ class detector(nn.Module):
             start_index = 0
             final_feature_index = 0
 
+            FINAL_FEATURES_LIST = []
+
             while counter < im_data.shape[0]:
                 print(f"FINAL_FEATURES: [{FINAL_FEATURES.size()}]")
                 #compute 10 images in batch and  collect all frames data in the video
@@ -395,11 +397,11 @@ class detector(nn.Module):
                 end_index = start_index + sum(len(anno) for anno in gt_annotation[counter:counter_limit])
                 print(f"[start_index:end_index]: [{start_index}:{end_index}]")
 
-                inputs_data = im_data[counter:counter_limit].clone().detach().to(self.device)
+                inputs_data = im_data[counter:counter_limit]
                 print(f"[counter:counter_limit]: [{counter}:{counter_limit}]")
                 print(f"inputs_data: [{inputs_data.size()}]")
                     
-                base_feat = self.fasterRCNN.RCNN_base(inputs_data).clone().detach().to(self.device)
+                base_feat = self.fasterRCNN.RCNN_base(inputs_data)
                 print(f"base_feat: [{base_feat.size()}]")
                 # FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
 
@@ -410,10 +412,11 @@ class detector(nn.Module):
                 roi_boxes = bboxes[start_index:].clone().detach().to(self.device)
                 print(f"roi_boxes: [{roi_boxes.size()}]")
 
-                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, roi_boxes).clone().detach().to(self.device)
+                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, roi_boxes)
                 print(f"roi_align: [{roi_align.size()}]")
 
-                FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
+                FINAL_FEATURES_LIST.append(roi_align)
+                # FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
 
                 if self.mode == 'predcls':
                     print(f"pair: [{pair.size()}]")
@@ -475,7 +478,7 @@ class detector(nn.Module):
             # print(f"FINAL_FEATURES_LIST: {sum([b.size()[0] for b in FINAL_FEATURES_LIST])}")
             # print(f"FINAL_FEATURES_LIST: {[b.size() for b in FINAL_FEATURES_LIST]}")
             #
-            # FINAL_FEATURES = torch.cat(FINAL_FEATURES_LIST)
+            FINAL_FEATURES = torch.cat(FINAL_FEATURES_LIST)
             print(f"FINAL_FEATURES: {len(FINAL_FEATURES)}")
 
             if self.mode == 'predcls':
