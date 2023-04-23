@@ -165,10 +165,10 @@ for epoch in range(int(conf.nepoch)):
         gt_boxes = copy.deepcopy(data[2]).to(object_detector_device)
         num_boxes = copy.deepcopy(data[3]).to(object_detector_device)
 
-        print(f"im_data.shape: {im_data.size()}")
-        print(f"im_info.shape: {im_info.size()}")
-        print(f"gt_boxes.shape: {gt_boxes.size()}")
-        print(f"num_boxes.shape: {num_boxes.size()}")
+        # print(f"im_data.shape: {im_data.size()}")
+        # print(f"im_info.shape: {im_info.size()}")
+        # print(f"gt_boxes.shape: {gt_boxes.size()}")
+        # print(f"num_boxes.shape: {num_boxes.size()}")
 
         gt_annotation_lens = [len(anno) for anno in gt_annotation]
         ranges = []
@@ -179,7 +179,7 @@ for epoch in range(int(conf.nepoch)):
                 ranges.append((start_index, i))
                 start_index = i
 
-        print(f"total range: {ranges[0][0]} - {ranges[-1][1]}")
+        # print(f"total range: {ranges[0][0]} - {ranges[-1][1]}")
         print(f"ranges: {ranges}")
 
         # prevent gradients to FasterRCNN
@@ -207,6 +207,7 @@ for epoch in range(int(conf.nepoch)):
                     gt_annotation[i: j],
                     im_all=None
                 )
+                print(f"entry im_idx: {entry['im_idx']}")
                 # print(f"entry keys: {list(key for key in entry.keys() if entry[key] is None)}")
                 # print(f"entries keys: {list(key for key in entries.keys() if entries[key] is None)}")
                 # print(f"entry source_gt: {entry['source_gt']}")
@@ -218,6 +219,7 @@ for epoch in range(int(conf.nepoch)):
                     k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
                     else entries[k] + v for k, v in entry.items()
                 }
+                print(f"entries im_idx: {entries['im_idx']}")
                 # print(f"entries source_gt: {[len(e) for e in entries['source_gt']]}")
                 # print(f"entries target_gt: {[len(e) for e in entries['target_gt']]}")
 

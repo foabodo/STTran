@@ -345,16 +345,16 @@ class detector(nn.Module):
                 counter += self.batch_size
 
             # FINAL_BASE_FEATURES = FINAL_BASE_FEATURES.to(self.device)
-            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
+            # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
-            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
+            # print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
 
             FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
-            print(f"FINAL_FEATURES (roi_align): {FINAL_FEATURES.size()}")
+            # print(f"FINAL_FEATURES (roi_align): {FINAL_FEATURES.size()}")
 
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
-            print(f"FINAL_FEATURES (head_to_tail): {FINAL_FEATURES.size()}")
+            # print(f"FINAL_FEATURES (head_to_tail): {FINAL_FEATURES.size()}")
 
             if self.mode == 'predcls':
                 union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
