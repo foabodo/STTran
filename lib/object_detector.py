@@ -487,7 +487,7 @@ class detector(nn.Module):
             # print(f"FINAL_FEATURES_LIST: {[b.size() for b in FINAL_FEATURES_LIST]}")
             #
             FINAL_FEATURES = torch.cat(FINAL_FEATURES_LIST)
-            print(f"FINAL_FEATURES: {len(FINAL_FEATURES)}")
+            print(f"FINAL_FEATURES: {FINAL_FEATURES.size()}")
 
             if self.mode == 'predcls':
                 # _im_idx = im_idx[:, None]

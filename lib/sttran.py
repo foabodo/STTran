@@ -80,7 +80,18 @@ class STTran(nn.Module):
         entry = self.object_classifier(entry)
 
         # visual part
+        features = entry['features']
+        print(f"features: {features.shape()}")
+
+        pair_idx = entry['pair_idx']
+        print(f"pair_idx: {pair_idx}")
+
+        select_pair_idx = pair_idx[:, 0]
+        print(f"select_pair_idx: {select_pair_idx}")
+
         subj_rep = entry['features'][entry['pair_idx'][:, 0]]
+        print(f"subj_rep: {subj_rep.shape()}")
+
         subj_rep = self.subj_fc(subj_rep)
         obj_rep = entry['features'][entry['pair_idx'][:, 1]]
         obj_rep = self.obj_fc(obj_rep)
