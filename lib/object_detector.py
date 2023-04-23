@@ -37,10 +37,10 @@ class detector(nn.Module):
 
         self.fasterRCNN = resnet(
             classes=self.object_classes,
+            num_layers=101,
             pretrained=False,
             class_agnostic=False
         )
-
         self.fasterRCNN.create_architecture()
 
         if state_dict:  # we're using Torchserve
@@ -405,7 +405,7 @@ class detector(nn.Module):
                 print(f"base_feat: [{base_feat.size()}]")
                 # FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
 
-                # shift roi_align operation up into itarator over base feats so not all base feats need to be stored
+                # shift roi_align operation up into iterator over base feats so not all base feats need to be stored
                 bboxes = FINAL_BBOXES[:end_index]
                 print(f"bboxes: [{bboxes.size()}]")
 
@@ -419,6 +419,7 @@ class detector(nn.Module):
                 # FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
 
                 if self.mode == 'predcls':
+                    print(f"im_idx: [{im_idx[counter:counter_limit, None].size()}]")
                     print(f"pair: [{pair.size()}]")
                     print(f"union_boxes: [{union_boxes.size()}]")
                     print(f"union_feat: [{union_feat.size()}]")
@@ -437,13 +438,20 @@ class detector(nn.Module):
                     max_pair_idx_1 = pair[counter:counter_limit, 1]
                     print(f"max_pair_idx_1: [{max_pair_idx_1}]")
 
-                    union_box = torch.cat((
-                                im_idx[counter:counter_limit, None],
-                                torch.min(min_bboxes[min_pair_idx_0],
-                                          min_bboxes[min_pair_idx_1]),
-                                torch.max(max_bboxes[max_pair_idx_0],
-                                          max_bboxes[max_pair_idx_1])
-                            ), 1).to(self.device)
+                    union_box = torch.cat(
+                        (
+                            im_idx[counter:counter_limit, None],
+                            torch.min(
+                                min_bboxes[min_pair_idx_0],
+                                min_bboxes[min_pair_idx_1]
+                            ),
+                            torch.max(
+                                max_bboxes[max_pair_idx_0],
+                                max_bboxes[max_pair_idx_1]
+                            )
+                        ),
+                        1
+                    ).to(self.device)
                     print(f"union_box: [{union_box.size()}]")
                     # union_box = union_boxes[start_index:end_index].clone().detach()
                     union_boxes = torch.cat((union_boxes, union_box), 0)
@@ -580,7 +588,6 @@ class detector(nn.Module):
                         (im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
                          torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])), 1)
                     union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
-
                     FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] / im_info[0, 2]
                     pair_rois = torch.cat((FINAL_BBOXES[pair[:, 0], 1:], FINAL_BBOXES[pair[:, 1], 1:]),
                                           1).data.cpu().numpy()
