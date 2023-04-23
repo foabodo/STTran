@@ -406,7 +406,10 @@ class detector(nn.Module):
                 bboxes = FINAL_BBOXES[:end_index]
                 print(f"bboxes: [{bboxes.size()}]")
 
-                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, bboxes[start_index:])
+                roi_boxes = bboxes[start_index:]
+                print(f"roi_boxes: [{roi_boxes.size()}]")
+
+                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, )
                 print(f"roi_align: [{roi_align.size()}]")
 
                 FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
