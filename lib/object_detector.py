@@ -382,6 +382,7 @@ class detector(nn.Module):
 
             counter = 0
             start_index = 0
+            final_feature_index = 0
 
             while counter < im_data.shape[0]:
                 #compute 10 images in batch and  collect all frames data in the video
@@ -398,7 +399,7 @@ class detector(nn.Module):
                 # FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
 
                 # shift roi_align operation up into itarator over base feats so not all base feats need to be stored
-                bboxes = FINAL_BBOXES[start_index:end_index]
+                bboxes = FINAL_BBOXES[final_feature_index]
 
                 FINAL_FEATURES = torch.cat((FINAL_FEATURES, self.fasterRCNN.RCNN_roi_align(base_feat, bboxes)), 0)
 
@@ -418,6 +419,8 @@ class detector(nn.Module):
                 counter += self.batch_size
 
                 start_index = end_index
+
+                final_feature_index += 1
             # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
             # print(f"FINAL_BASE_FEATURES_LIST: {len(FINAL_BASE_FEATURES_LIST)}")
             # print(f"FINAL_BASE_FEATURES_LIST: {sum([b.size()[0] for b in FINAL_BASE_FEATURES_LIST])}")
