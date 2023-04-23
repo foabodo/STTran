@@ -330,7 +330,8 @@ class detector(nn.Module):
             im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
 
             counter = 0
-            FINAL_BASE_FEATURES = torch.tensor([]).to(self.device)
+            # FINAL_BASE_FEATURES = torch.tensor([]).to(self.device)
+            FINAL_BASE_FEATURES_LIST = []
 
             while counter < im_data.shape[0]:
                 #compute 10 images in batch and  collect all frames data in the video
@@ -340,21 +341,61 @@ class detector(nn.Module):
                     inputs_data = im_data[counter:]
                     
                 base_feat = self.fasterRCNN.RCNN_base(inputs_data)
-                FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
+                # FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
+                FINAL_BASE_FEATURES_LIST.append(base_feat)
                 counter += self.batch_size
-            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
+            # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
-            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
-            FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
-            FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
+
+            FINAL_BBOXES_LIST = []
+
+            start_index = 0
+            for i in range(0, len(gt_annotation), self.batch_size):
+                limit = i + self.batch_size if i + self.batch_size < len(gt_annotation) else len(gt_annotation)
+                end_index = sum(len(anno) for anno in gt_annotation[i:limit])
+                FINAL_BBOXES_LIST.append(FINAL_BBOXES[start_index:end_index])
+                start_index = end_index
+
+            # print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
+            # FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
+
+            FINAL_FEATURES_LIST = [
+                self.fasterRCNN.RCNN_roi_align(features, bboxes)
+                for features, bboxes in zip((FINAL_BASE_FEATURES_LIST, FINAL_BBOXES_LIST))
+            ]
+            # FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
+
+            FINAL_FEATURES_LIST = [self.fasterRCNN._head_to_tail(features) for features in FINAL_FEATURES_LIST]
+
+            FINAL_FEATURES = torch.cat(FINAL_FEATURES_LIST)
 
             if self.mode == 'predcls':
-                union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
-                                         torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])), 1)
+                union_boxes = torch.cat((
+                    im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
+                    torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])
+                ), 1)
                 print(f"union_boxes: {union_boxes.size()}")
-                union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
-                print(f"union_feat: {union_feat.size()}")
+
+                union_boxes_list = [
+                    torch.cat((
+                        im_idx[:, None], torch.min(bboxes[:, 1:3][pair[:, 0]], bboxes[:, 1:3][pair[:, 1]]),
+                        torch.max(bboxes[:, 3:5][pair[:, 0]], bboxes[:, 3:5][pair[:, 1]])
+                    ), 1) for bboxes in FINAL_BBOXES_LIST
+                ]
+                print(f"union_boxes_list: {[bboxes.size() for bboxes in union_boxes_list]}")
+                print(f"union_boxes_list: {sum([len(bboxes) for bboxes in union_boxes_list])}")
+
+                # union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
+                # print(f"union_feat: {union_feat.size()}")
+
+                union_feat_list = [
+                    self.fasterRCNN.RCNN_roi_align(features, bboxes)
+                    for features, bboxes in zip(FINAL_BASE_FEATURES_LIST, union_boxes_list)
+                ]
+                print(f"union_feat_list: {sum([len(bboxes) for bboxes in union_feat_list])}")
+
+                union_feat = torch.cat(union_feat_list)
 
                 FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] / im_info[0, 2]
                 pair_rois = torch.cat((FINAL_BBOXES[pair[:, 0], 1:], FINAL_BBOXES[pair[:, 1], 1:]),

@@ -160,7 +160,7 @@ for epoch in range(int(conf.nepoch)):
         # if num_gt_annotations >= 3625:
         #     continue
 
-        im_data = copy.deepcopy(data[0])
+        im_data = copy.deepcopy(data[0]).to(object_detector_device)
         im_info = copy.deepcopy(data[1]).to(object_detector_device)
         gt_boxes = copy.deepcopy(data[2]).to(object_detector_device)
         num_boxes = copy.deepcopy(data[3]).to(object_detector_device)
@@ -170,78 +170,13 @@ for epoch in range(int(conf.nepoch)):
         # print(f"gt_boxes.shape: {gt_boxes.size()}")
         # print(f"num_boxes.shape: {num_boxes.size()}")
 
-        gt_annotation_lens = [len(anno) for anno in gt_annotation]
-        ranges = []
-        i = 0
-        start_index = 0
-        for i in range(1, len(gt_annotation) + 1):
-            if sum(gt_annotation_lens[start_index:i]) > 1536 or i == len(gt_annotation):
-                ranges.append((start_index, i))
-                start_index = i
-
-        # print(f"total range: {ranges[0][0]} - {ranges[-1][1]}")
-        print(f"ranges: {ranges}")
-
         # prevent gradients to FasterRCNN
         with torch.no_grad():
-            entries = {
-                'boxes': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'labels': torch.tensor([], dtype=torch.int64).to(sttran_device),  # here is the groundtruth
-                'scores': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'im_idx': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'pair_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
-                'human_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
-                'features': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'union_feat': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'union_box': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'spatial_masks': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'source_gt': [],
-                'target_gt': []
-             }
-            for i, j in ranges:
-                entry = object_detector(
-                    im_data[i: j].to(object_detector_device),
-                    im_info[i: j].to(object_detector_device),
-                    gt_boxes[i: j].to(object_detector_device),
-                    num_boxes[i: j].to(object_detector_device),
-                    gt_annotation[i: j],
-                    im_all=None
-                )
-                print(f"entry pair_idx: {entry['pair_idx']}")
-                # print(f"entry keys: {list(key for key in entry.keys() if entry[key] is None)}")
-                # print(f"entries keys: {list(key for key in entries.keys() if entries[key] is None)}")
-                # print(f"entry source_gt: {entry['source_gt']}")
-                # print(f"entry target_gt: {entry['target_gt']}")
-                # if entries is None:
-                #     entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
-                # else:
+            entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
 
-                im_idx_addition = entries['im_idx'][-1] + 1. if len(entries['im_idx']) > 0 else 0.
-                pair_idx_addition = entries['pair_idx'][-1][-1] + 1. if len(entries['im_idx']) > 0 else 0.
+        entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
 
-                entries = {
-                    'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device))),
-                    'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device))),  # here is the groundtruth
-                    'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device))),
-                    'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device) + im_idx_addition)),
-                    'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device) + pair_idx_addition)),
-                    'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device))),
-                    'features': torch.cat((entries['features'], entry['features'].to(sttran_device))),
-                    'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device))),
-                    'union_box': torch.cat((entries['union_box'], entry['union_box'].to(sttran_device))),
-                    'spatial_masks': torch.cat((entries['spatial_masks'], entry['spatial_masks'].to(sttran_device))),
-                    'source_gt': entries['source_gt'] + entry['source_gt'],
-                    'target_gt': entries['target_gt'] + entry['target_gt']
-                }
-                # entries = {
-                #     k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
-                #     else entries[k] + v for k, v in entry.items()
-                # }
-                print(f"entries pair_idx: {entries['pair_idx']}")
-                # print(f"entries source_gt: {[len(e) for e in entries['source_gt']]}")
-                # print(f"entries target_gt: {[len(e) for e in entries['target_gt']]}")
-
-        pred = model(entries)
+        pred = model(entry)
 
         source_distribution = pred["source_distribution"]
         target_distribution = pred["target_distribution"]
