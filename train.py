@@ -222,7 +222,7 @@ for epoch in range(int(conf.nepoch)):
                     'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device))),
                     'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device))),  # here is the groundtruth
                     'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device))),
-                    'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device)) + entries['im_idx'][-1]),
+                    'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device)) + im_idx_addition),
                     'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device))),
                     'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device))),
                     'features': torch.cat((entries['features'], entry['features'].to(sttran_device))),
