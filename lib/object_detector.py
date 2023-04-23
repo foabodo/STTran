@@ -371,7 +371,7 @@ class detector(nn.Module):
             # FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
 
             FINAL_FEATURES_LIST = [
-                self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES_LIST[i].to(self.device), FINAL_BBOXES_LIST[i])
+                self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES_LIST[i], FINAL_BBOXES_LIST[i].to(self.cpu_device))
                 for i in range(len(FINAL_BBOXES_LIST))
             ]
             # FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
