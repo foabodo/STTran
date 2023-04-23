@@ -209,15 +209,17 @@ for epoch in range(int(conf.nepoch)):
                 )
                 print(f"entry keys: {list(key for key in entry.keys() if entry[key] is None)}")
                 print(f"entries keys: {list(key for key in entries.keys() if entries[key] is None)}")
-                print(f"source_gt: {entry['source_gt']}")
-                print(f"target_gt: {entry['target_gt']}")
+                print(f"entry source_gt: {entry['source_gt']}")
+                print(f"entry target_gt: {entry['target_gt']}")
                 # if entries is None:
                 #     entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
                 # else:
                 entries = {
                     k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
-                    else entries[k].extend(v) for k, v in entry.items()
+                    else entries[k] + v for k, v in entry.items()
                 }
+                print(f"entries source_gt: {entries['source_gt']}")
+                print(f"entries target_gt: {entries['target_gt']}")
 
         pred = model(entries)
 
