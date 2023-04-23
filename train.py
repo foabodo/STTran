@@ -217,13 +217,14 @@ for epoch in range(int(conf.nepoch)):
                 # else:
 
                 im_idx_addition = entries['im_idx'][-1] + 1. if len(entries['im_idx']) > 0 else 0.
+                pair_idx_addition = entries['pair_idx'][-1][-1] + 1. if len(entries['im_idx']) > 0 else 0.
 
                 entries = {
                     'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device))),
                     'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device))),  # here is the groundtruth
                     'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device))),
                     'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device) + im_idx_addition)),
-                    'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device))),
+                    'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device) + pair_idx_addition)),
                     'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device))),
                     'features': torch.cat((entries['features'], entry['features'].to(sttran_device))),
                     'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device))),
