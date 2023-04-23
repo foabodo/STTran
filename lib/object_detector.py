@@ -400,6 +400,7 @@ class detector(nn.Module):
 
                 # shift roi_align operation up into itarator over base feats so not all base feats need to be stored
                 bboxes = FINAL_BBOXES[final_feature_index]
+                print(f"bboxes: [{bboxes.size()}]")
 
                 FINAL_FEATURES = torch.cat((FINAL_FEATURES, self.fasterRCNN.RCNN_roi_align(base_feat, bboxes)), 0)
 
