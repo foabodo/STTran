@@ -398,6 +398,7 @@ class detector(nn.Module):
                 print(f"[counter:counter_limit]: [{counter}:{counter_limit}]")
                     
                 base_feat = self.fasterRCNN.RCNN_base(inputs_data)
+                print(f"base_feat: [{base_feat.size()}]")
                 # FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
 
                 # shift roi_align operation up into itarator over base feats so not all base feats need to be stored
