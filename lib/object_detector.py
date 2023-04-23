@@ -387,13 +387,14 @@ class detector(nn.Module):
             while counter < im_data.shape[0]:
                 #compute 10 images in batch and  collect all frames data in the video
                 if counter + self.batch_size < im_data.shape[0]:
-                    inputs_data = im_data[counter:counter + self.batch_size]
+                    counter_limit = counter + self.batch_size
                     end_index = start_index + sum(len(anno) for anno in gt_annotation[counter:counter + self.batch_size])
                 else:
-                    inputs_data = im_data[counter:]
+                    counter_limit = len(im_data)
                     end_index = start_index + sum(len(anno) for anno in gt_annotation[counter:])
-
+                inputs_data = im_data[counter:counter_limit]
                 print(f"[start_index:end_index]: [{start_index}:{end_index}]")
+                print(f"[counter:counter_limit]: [{counter}:{counter_limit}]")
                     
                 base_feat = self.fasterRCNN.RCNN_base(inputs_data)
                 # FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
