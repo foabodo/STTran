@@ -346,6 +346,8 @@ class detector(nn.Module):
                 counter += self.batch_size
             # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
             print(f"FINAL_BASE_FEATURES_LIST: {len(FINAL_BASE_FEATURES_LIST)}")
+            print(f"FINAL_BASE_FEATURES_LIST: {sum([b.size()[0] for b in FINAL_BASE_FEATURES_LIST])}")
+            print(f"FINAL_BASE_FEATURES_LIST: {[b.size() for b in FINAL_BASE_FEATURES_LIST]}")
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
             print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
@@ -361,7 +363,7 @@ class detector(nn.Module):
                 start_index = end_index
 
             print(f"FINAL_BBOXES_LIST: {len(FINAL_BBOXES_LIST)}")
-            print(f"FINAL_FEATURES_LIST: {sum([b.size()[0] for b in FINAL_BBOXES_LIST])}")
+            print(f"FINAL_BBOXES_LIST: {sum([b.size()[0] for b in FINAL_BBOXES_LIST])}")
             print(f"FINAL_BBOXES_LIST: {[b.size() for b in FINAL_BBOXES_LIST]}")
             # print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
             # FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
