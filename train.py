@@ -181,23 +181,23 @@ for epoch in range(int(conf.nepoch)):
 
         print(f"total range: {ranges[0][0]} - {ranges[-1][1]}")
         print(f"ranges: {ranges}")
-        entries = {
-            'boxes': torch.tensor([]).to(sttran_device),
-            'labels': torch.tensor([]).to(sttran_device),  # here is the groundtruth
-            'scores': torch.tensor([]).to(sttran_device),
-            'im_idx': torch.tensor([]).to(sttran_device),
-            'pair_idx': torch.tensor([]).to(sttran_device),
-            'human_idx': torch.tensor([]).to(sttran_device),
-            'features': torch.tensor([]).to(sttran_device),
-            'union_feat': torch.tensor([]).to(sttran_device),
-            'union_box': torch.tensor([]).to(sttran_device),
-            'spatial_masks': torch.tensor([]).to(sttran_device),
-            'source_gt': [],
-            'target_gt': []
-         }
 
         # prevent gradients to FasterRCNN
         with torch.no_grad():
+            entries = {
+                'boxes': torch.tensor([]).to(sttran_device),
+                'labels': torch.tensor([]).to(sttran_device),  # here is the groundtruth
+                'scores': torch.tensor([]).to(sttran_device),
+                'im_idx': torch.tensor([]).to(sttran_device),
+                'pair_idx': torch.tensor([]).to(sttran_device),
+                'human_idx': torch.tensor([]).to(sttran_device),
+                'features': torch.tensor([]).to(sttran_device),
+                'union_feat': torch.tensor([]).to(sttran_device),
+                'union_box': torch.tensor([]).to(sttran_device),
+                'spatial_masks': torch.tensor([]).to(sttran_device),
+                'source_gt': [],
+                'target_gt': []
+             }
             for i, j in ranges:
                 entry = object_detector(
                     im_data[i: j].to(object_detector_device),
@@ -208,6 +208,7 @@ for epoch in range(int(conf.nepoch)):
                     im_all=None
                 )
                 print(f"entry keys: {list(key for key in entry.keys() if entry[key] is None)}")
+                print(f"entries keys: {list(key for key in entries.keys() if entries[key] is None)}")
                 # if entries is None:
                 #     entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
                 # else:
