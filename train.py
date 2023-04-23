@@ -215,6 +215,9 @@ for epoch in range(int(conf.nepoch)):
                 # if entries is None:
                 #     entries = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
                 # else:
+
+                im_idx_addition = entries['im_idx'][-1] + 1. if len(entries['im_idx']) > 0 else 0.
+
                 entries = {
                     'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device))),
                     'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device))),  # here is the groundtruth
@@ -226,8 +229,8 @@ for epoch in range(int(conf.nepoch)):
                     'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device))),
                     'union_box': torch.cat((entries['union_box'], entry['union_box'].to(sttran_device))),
                     'spatial_masks': torch.cat((entries['spatial_masks'], entry['spatial_masks'].to(sttran_device))),
-                    'source_gt': [],
-                    'target_gt': []
+                    'source_gt': entries['source_gt'] + entry['source_gt'],
+                    'target_gt': entries['target_gt'] + entry['target_gt']
                 }
                 # entries = {
                 #     k: torch.cat((entries[k], v.to(sttran_device)), 0) if isinstance(v, torch.Tensor)
