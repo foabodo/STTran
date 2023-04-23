@@ -366,6 +366,8 @@ class detector(nn.Module):
                                       1).data.cpu().numpy()
                 spatial_masks = torch.tensor(draw_union_boxes(pair_rois, 27) - 0.5).to(FINAL_FEATURES.device)
 
+                print(f"im_idx type: {im_idx[0]}")
+
                 entry = {'boxes': FINAL_BBOXES,
                          'labels': FINAL_LABELS, # here is the groundtruth
                          'scores': FINAL_SCORES,

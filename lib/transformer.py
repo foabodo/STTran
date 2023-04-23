@@ -128,11 +128,16 @@ class transformer(nn.Module):
 
 
     def forward(self, features, im_idx):
+        print(f"features: {features.size()}")
+        print(f"im_idx: {im_idx.size()}")
+
         rel_idx = torch.arange(im_idx.shape[0])
         print(f"rel_idx: {rel_idx.size()}")
 
         l = torch.sum(im_idx == torch.mode(im_idx)[0])  # the highest box number in the single frame
+        print(f"l: {l}")
         b = int(im_idx[-1] + 1)
+        print(f"b: {b}")
         rel_input = torch.zeros([l, b, features.shape[1]]).to(features.device)
         print(f"rel_input: {rel_input.size()}")
 
