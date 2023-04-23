@@ -342,9 +342,10 @@ class detector(nn.Module):
                     
                 base_feat = self.fasterRCNN.RCNN_base(inputs_data)
                 # FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
-                FINAL_BASE_FEATURES_LIST.append(base_feat)
+                FINAL_BASE_FEATURES_LIST.append(base_feat.to(self.cpu_device))
                 counter += self.batch_size
             # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
+            print(f"FINAL_BASE_FEATURES_LIST: {len(FINAL_BASE_FEATURES_LIST)}")
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
 
@@ -357,11 +358,12 @@ class detector(nn.Module):
                 FINAL_BBOXES_LIST.append(FINAL_BBOXES[start_index:end_index])
                 start_index = end_index
 
+            print(f"FINAL_BBOXES_LIST: {len(FINAL_BBOXES_LIST)}")
             # print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
             # FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
 
             FINAL_FEATURES_LIST = [
-                self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES_LIST[i], FINAL_BBOXES_LIST[i])
+                self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES_LIST[i].to(self.device), FINAL_BBOXES_LIST[i])
                 for i in range(len(FINAL_BBOXES_LIST))
             ]
             # FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
