@@ -409,7 +409,7 @@ class detector(nn.Module):
                 bboxes = FINAL_BBOXES[:end_index]
                 print(f"bboxes: [{bboxes.size()}]")
 
-                roi_boxes = bboxes[start_index:].clone().detach().to(self.device)
+                roi_boxes = bboxes[start_index:]
                 print(f"roi_boxes: [{roi_boxes.size()}]")
 
                 roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, roi_boxes)
