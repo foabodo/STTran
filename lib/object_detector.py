@@ -444,8 +444,10 @@ class detector(nn.Module):
                                 torch.max(max_bboxes[max_pair_idx_0],
                                           max_bboxes[max_pair_idx_1])
                             ), 1).to(self.device)
+                    print(f"union_box: [{union_box.size()}]")
                     # union_box = union_boxes[start_index:end_index].clone().detach()
                     union_boxes = torch.cat((union_boxes, union_box), 0)
+                    print(f"union_boxes: [{union_boxes.size()}]")
 
                     union_feat = torch.cat((union_feat, self.fasterRCNN.RCNN_roi_align(base_feat, union_box)))
                 # FINAL_BASE_FEATURES_LIST.append(base_feat)
