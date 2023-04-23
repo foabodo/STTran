@@ -407,6 +407,8 @@ class detector(nn.Module):
 
                 if self.mode == 'predcls':
                     print(f"pair: [{pair.size()}]")
+                    print(f"union_boxes: [{union_boxes.size()}]")
+                    print(f"union_feat: [{union_feat.size()}]")
 
                     min_bboxes = bboxes[:, 1:3]
                     print(f"min_bboxes: [{min_bboxes.size()}]")
