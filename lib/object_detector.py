@@ -406,13 +406,13 @@ class detector(nn.Module):
                     _im_idx = im_idx[start_index:end_index, None]
                     print(f"_im_idx: {_im_idx.size()}")
 
-                    min_arg_1 = FINAL_BBOXES[:, 1:3][pair[:, 0]]
+                    min_arg_1 = bboxes[:, 1:3][pair[:, 0]]
                     print(f"min_arg_1: {min_arg_1.size()}")
-                    min_arg_2 = FINAL_BBOXES[:, 1:3][pair[:, 1]]
+                    min_arg_2 = bboxes[:, 1:3][pair[:, 1]]
                     print(f"min_arg_2: {min_arg_2.size()}")
-                    max_arg_1 = FINAL_BBOXES[:, 3:5][pair[:, 0]]
+                    max_arg_1 = bboxes[:, 3:5][pair[:, 0]]
                     print(f"max_arg_1: {max_arg_1.size()}")
-                    max_arg_2 = FINAL_BBOXES[:, 3:5][pair[:, 1]]
+                    max_arg_2 = bboxes[:, 3:5][pair[:, 1]]
                     print(f"max_arg_2: {max_arg_2.size()}")
 
                     union_boxes_list.append(
