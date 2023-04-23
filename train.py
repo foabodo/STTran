@@ -179,7 +179,8 @@ for epoch in range(int(conf.nepoch)):
                 ranges.append((start_index, i))
                 start_index = i
 
-        print(f"range: {ranges[0][0]} - {ranges[-1][1]}")
+        print(f"total range: {ranges[0][0]} - {ranges[-1][1]}")
+        print(f"ranges: {ranges}")
         entries = None
 
         # prevent gradients to FasterRCNN
