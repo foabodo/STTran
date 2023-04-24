@@ -430,7 +430,7 @@ class detector(nn.Module):
                     print(f"indexes: {indexes}")
                     print(f"indexes: {indexes.size()}")
 
-                    index = torch.nonzero(torch.isin(im_idx, indexes))
+                    index = torch.nonzero(torch.isin(im_idx, indexes), as_tuple=True)[0]
                     print(f"index: {index}")
                     # index = index[:, None]
                     # print(f"index: {index}")
