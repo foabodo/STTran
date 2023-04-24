@@ -329,7 +329,7 @@ class detector(nn.Module):
             pair = torch.tensor(pair).to(self.device)
             print(f"global pair: {pair}")
             print(f"global pair: {pair.size()}")
-            im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
+            im_idx = torch.tensor(im_idx, dtype=torch.int32).to(self.device)
             print(f"global im_idx: {im_idx}")
             print(f"global im_idx: {im_idx.size()}")
 
