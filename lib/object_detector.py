@@ -306,7 +306,7 @@ class detector(nn.Module):
             FINAL_BBOXES = torch.zeros([bbox_num,5], dtype=torch.float32).to(self.device)
             FINAL_LABELS = torch.zeros([bbox_num], dtype=torch.int64).to(self.device)
             FINAL_SCORES = torch.ones([bbox_num], dtype=torch.float32).to(self.device)
-            HUMAN_IDX = torch.zeros([len(gt_annotation),1], dtype=torch.int64).to(self.device)
+            HUMAN_IDX = torch.zeros([len(gt_annotation), 1], dtype=torch.int64).to(self.device)
 
             bbox_idx = 0
             for i, j in enumerate(gt_annotation):
@@ -427,7 +427,7 @@ class detector(nn.Module):
                     print(f"indexes: {indexes}")
                     print(f"indexes: {indexes.size()}")
 
-                    index = torch.where(im_idx in indexes)#[:, None]
+                    index = torch.where(torch.isin(im_idx, indexes))#[:, None]
                     print(f"index: {index}")
                     print(f"index: {index.size()}")
 
