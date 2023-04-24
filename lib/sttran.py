@@ -81,7 +81,7 @@ class STTran(nn.Module):
 
         # visual part
         features = entry['features']
-        print(f"features: {features.shape()}")
+        print(f"features: {features.size()}")
 
         pair_idx = entry['pair_idx']
         print(f"pair_idx: {pair_idx}")
