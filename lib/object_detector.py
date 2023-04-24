@@ -423,19 +423,20 @@ class detector(nn.Module):
                 # FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
 
                 if self.mode == 'predcls':
-                    print(f"im_idx: [{im_idx[counter:counter_limit, None].size()}]")
-                    print(f"pair: [{pair.size()}]")
-                    print(f"union_boxes: [{union_boxes.size()}]")
-                    print(f"union_feat: [{union_feat.size()}]")
+                    indexes = bboxes[start_index:end_index, 0]
+                    print(f"indexes: {indexes.size()}")
+                    print(f"pair: {pair.size()}")
+                    print(f"union_boxes: {union_boxes.size()}")
+                    print(f"union_feat: {union_feat.size()}")
 
-                    min_bboxes = bboxes[:, 1:3]
+                    min_bboxes = bboxes[start_index:end_index, 1:3]
                     print(f"min_bboxes: [{min_bboxes.size()}]")
                     min_pair_idx_0 = pair[counter:counter_limit, 0]
                     print(f"min_pair_idx_0: [{min_pair_idx_0}]")
                     min_pair_idx_1 = pair[counter:counter_limit, 1]
                     print(f"min_pair_idx_1: [{min_pair_idx_1}]")
 
-                    max_bboxes = bboxes[:, 3:5]
+                    max_bboxes = bboxes[start_index:end_index, 3:5]
                     print(f"max_bboxes: [{max_bboxes.size()}]")
                     max_pair_idx_0 = pair[counter:counter_limit, 0]
                     print(f"max_pair_idx_0: [{max_pair_idx_0}]")
