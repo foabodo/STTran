@@ -424,6 +424,7 @@ class detector(nn.Module):
 
                 if self.mode == 'predcls':
                     indexes = bboxes[start_index:end_index, 0]
+                    print(f"indexes: {indexes}")
                     print(f"indexes: {indexes.size()}")
                     print(f"pair: {pair.size()}")
                     print(f"union_boxes: {union_boxes.size()}")
