@@ -327,6 +327,8 @@ class detector(nn.Module):
                         t_rel.append(m['target_relationship'].tolist())
                         bbox_idx += 1
             pair = torch.tensor(pair).to(self.device)
+            print(f"global pair: {pair}")
+            print(f"global pair: {pair.size()}")
             im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
             print(f"global im_idx: {im_idx}")
             print(f"global im_idx: {im_idx.size()}")
