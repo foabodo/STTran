@@ -427,7 +427,11 @@ class detector(nn.Module):
                     print(f"indexes: {indexes}")
                     print(f"indexes: {indexes.size()}")
 
-                    index = torch.tensor(torch.where(torch.isin(im_idx, indexes))).to(self.device)[:, None]
+                    index = torch.where(torch.isin(im_idx, indexes))
+                    print(f"index: {index}")
+                    index = torch.tensor(index).to(self.device)
+                    print(f"index: {index}")
+                    index = index[:, None]
                     print(f"index: {index}")
                     print(f"index: {index.size()}")
 
