@@ -416,7 +416,10 @@ class detector(nn.Module):
                 roi_boxes = bboxes[start_index:]
                 print(f"roi_boxes: [{roi_boxes.size()}]")
 
-                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, roi_boxes)
+                roi_align = self.fasterRCNN.RCNN_roi_align(
+                    base_feat.clone().detach().to(self.device),
+                    roi_boxes.clone().detach().to(self.device)
+                )
                 print(f"roi_align: [{roi_align.size()}]")
 
                 FINAL_FEATURES_LIST.append(roi_align)
