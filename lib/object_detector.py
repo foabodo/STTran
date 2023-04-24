@@ -429,8 +429,8 @@ class detector(nn.Module):
 
                     index = torch.where(torch.isin(im_idx, indexes))[0]
                     print(f"index: {index}")
-                    index = index[:, None]
-                    print(f"index: {index}")
+                    # index = index[:, None]
+                    # print(f"index: {index}")
                     print(f"index: {index.size()}")
 
                     print(f"pair: {pair.size()}")
