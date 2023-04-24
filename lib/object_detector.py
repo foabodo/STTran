@@ -467,7 +467,7 @@ class detector(nn.Module):
 
                     union_box = torch.cat(
                         (
-                            index,
+                            im_idx[index, None],
                             pair_min,
                             pair_max
                         ),
