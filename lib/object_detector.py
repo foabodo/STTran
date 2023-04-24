@@ -466,11 +466,11 @@ class detector(nn.Module):
                     )
                     print(f"pair_max: [{pair_max.size()}]")
                     print(f"index: {index.size()}")
-                    print(f"im_idx: {im_idx[index, None].size()}")
+                    print(f"im_idx: {im_idx[index].size()}")
 
                     union_box = torch.cat(
                         (
-                            im_idx[index, None],
+                            im_idx[index],
                             pair_min,
                             pair_max
                         ),
