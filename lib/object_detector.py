@@ -437,14 +437,14 @@ class detector(nn.Module):
                     print(f"union_boxes: {union_boxes.size()}")
                     print(f"union_feat: {union_feat.size()}")
 
-                    min_bboxes = bboxes[start_index:end_index, 1:3]
+                    min_bboxes = bboxes[:, 1:3]
                     print(f"min_bboxes: [{min_bboxes.size()}]")
                     min_pair_idx_0 = pair[index, 0]
                     print(f"min_pair_idx_0: [{min_pair_idx_0}]")
                     min_pair_idx_1 = pair[index, 1]
                     print(f"min_pair_idx_1: [{min_pair_idx_1}]")
 
-                    max_bboxes = bboxes[start_index:end_index, 3:5]
+                    max_bboxes = bboxes[:, 3:5]
                     print(f"max_bboxes: [{max_bboxes.size()}]")
                     max_pair_idx_0 = pair[index, 0]
                     print(f"max_pair_idx_0: [{max_pair_idx_0}]")
