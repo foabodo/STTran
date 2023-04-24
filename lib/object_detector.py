@@ -328,6 +328,8 @@ class detector(nn.Module):
                         bbox_idx += 1
             pair = torch.tensor(pair).to(self.device)
             im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
+            print(f"global im_idx: {im_idx}")
+            print(f"global im_idx: {im_idx.size()}")
 
             # FINAL_BBOXES_LIST = []
             #
