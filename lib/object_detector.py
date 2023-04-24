@@ -451,17 +451,25 @@ class detector(nn.Module):
                     max_pair_idx_1 = pair[index, 1]
                     print(f"max_pair_idx_1: [{max_pair_idx_1}]")
 
+                    pair_min = torch.min(
+                                min_bboxes[min_pair_idx_0],
+                                min_bboxes[min_pair_idx_1]
+                            )
+                    print(f"pair_min: [{pair_min.size()}]")
+
+                    pair_max = torch.max(
+                        max_bboxes[max_pair_idx_0],
+                        max_bboxes[max_pair_idx_1]
+                    )
+                    print(f"pair_max: [{pair_max.size()}]")
+                    print(f"index: {index.size()}")
+                    print(f"im_idx: {im_idx[index, None].size()}")
+
                     union_box = torch.cat(
                         (
                             index,
-                            torch.min(
-                                min_bboxes[min_pair_idx_0],
-                                min_bboxes[min_pair_idx_1]
-                            ),
-                            torch.max(
-                                max_bboxes[max_pair_idx_0],
-                                max_bboxes[max_pair_idx_1]
-                            )
+                            pair_min,
+                            pair_max
                         ),
                         1
                     ).to(self.device)
