@@ -416,17 +416,15 @@ class detector(nn.Module):
                 roi_boxes = bboxes[start_index:]
                 print(f"roi_boxes: [{roi_boxes.size()}]")
 
-                roi_align = self.fasterRCNN.RCNN_roi_align(
-                    base_feat.clone().detach().to(self.device),
-                    roi_boxes.clone().detach().to(self.device)
-                )
+                roi_align = self.fasterRCNN.RCNN_roi_align(base_feat, roi_boxes)
                 print(f"roi_align: [{roi_align.size()}]")
 
                 FINAL_FEATURES_LIST.append(roi_align)
                 # FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
 
                 if self.mode == 'predcls':
-                    indexes = bboxes[start_index:end_index, 0]
+                    # indexes = bboxes[start_index:end_index, 0]
+                    indexes = roi_boxes[:, 0]
                     print(f"indexes: {indexes}")
                     print(f"indexes: {indexes.size()}")
 
@@ -440,14 +438,14 @@ class detector(nn.Module):
                     print(f"union_boxes: {union_boxes.size()}")
                     print(f"union_feat: {union_feat.size()}")
 
-                    min_bboxes = bboxes[:, 1:3]
+                    min_bboxes = roi_boxes[:, 1:3]
                     print(f"min_bboxes: [{min_bboxes.size()}]")
                     min_pair_idx_0 = pair[index, 0]
                     print(f"min_pair_idx_0: [{min_pair_idx_0}]")
                     min_pair_idx_1 = pair[index, 1]
                     print(f"min_pair_idx_1: [{min_pair_idx_1}]")
 
-                    max_bboxes = bboxes[:, 3:5]
+                    max_bboxes = roi_boxes[:, 3:5]
                     print(f"max_bboxes: [{max_bboxes.size()}]")
                     max_pair_idx_0 = pair[index, 0]
                     print(f"max_pair_idx_0: [{max_pair_idx_0}]")
