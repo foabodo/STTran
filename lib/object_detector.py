@@ -422,10 +422,11 @@ class detector(nn.Module):
                 FINAL_FEATURES_LIST.append(roi_align)
                 # FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
 
+                indexes = bboxes[start_index:end_index, 0]
+                print(f"indexes: {indexes}")
+                print(f"indexes: {indexes.size()}")
+
                 if self.mode == 'predcls':
-                    indexes = bboxes[start_index:end_index, 0]
-                    print(f"indexes: {indexes}")
-                    print(f"indexes: {indexes.size()}")
                     print(f"pair: {pair.size()}")
                     print(f"union_boxes: {union_boxes.size()}")
                     print(f"union_feat: {union_feat.size()}")
