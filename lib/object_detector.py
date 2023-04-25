@@ -331,8 +331,8 @@ class detector(nn.Module):
                         FINAL_BBOXES[bbox_idx - next_bbox_idx, 1:] = torch.from_numpy(m['bbox'])
                         FINAL_BBOXES[bbox_idx - next_bbox_idx, 0] = i
                         FINAL_LABELS[bbox_idx - next_bbox_idx] = m['class']
-                        im_idx.append(i + next_im_idx)
-                        pair.append([int(HUMAN_IDX[i]), bbox_idx])
+                        im_idx.append(i)
+                        pair.append([int(HUMAN_IDX[i]), bbox_idx - next_bbox_idx])
                         s_rel.append(m['source_relationship'].tolist())
                         t_rel.append(m['target_relationship'].tolist())
                         bbox_idx += 1
@@ -370,22 +370,22 @@ class detector(nn.Module):
                 print(f"im_idx[:, None].size(): {im_idx[:, None].size()}")
                 print(f"im_idx[:, None][-1]: {im_idx[:, None][-1]}")
                 print(f"pair[:, 0].size(): {pair[:, 0].size()}")
-                print(f"pair[:, 0][-1]: {pair[:, 0][-1]}")
+                print(f"pair[:, 0][-1] - prev_pair_idx[0]: {pair[:, 0][-1]}")
                 print(f"FINAL_BBOXES[:, 1:3].size(): {FINAL_BBOXES[:, 1:3].size()}")
                 print(f"FINAL_BBOXES[:, 1:3][-1]: {FINAL_BBOXES[:, 3:5][-1]}")
-                print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0] - prev_pair_idx[0]].size()}")
-                print(f"FINAL_BBOXES[:, 3:5][pair[:, 1]]: {FINAL_BBOXES[:, 3:5][pair[:, 1] - prev_pair_idx[1]].size()}")
+                print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0]].size()}")
+                print(f"FINAL_BBOXES[:, 3:5][pair[:, 1]]: {FINAL_BBOXES[:, 3:5][pair[:, 1]].size()}")
 
                 union_boxes = torch.cat(
                     (
                         im_idx[:, None],
                         torch.min(
-                            FINAL_BBOXES[:, 1:3][pair[:, 0] - prev_pair_idx[0]],
-                            FINAL_BBOXES[:, 1:3][pair[:, 1] - prev_pair_idx[1]]
+                            FINAL_BBOXES[:, 1:3][pair[:, 0]],
+                            FINAL_BBOXES[:, 1:3][pair[:, 1]]
                         ),
                         torch.max(
-                            FINAL_BBOXES[:, 3:5][pair[:, 0] - prev_pair_idx[0]],
-                            FINAL_BBOXES[:, 3:5][pair[:, 1] - prev_pair_idx[1]]
+                            FINAL_BBOXES[:, 3:5][pair[:, 0]],
+                            FINAL_BBOXES[:, 3:5][pair[:, 1]]
                         )
                     ),
                     1
@@ -403,9 +403,9 @@ class detector(nn.Module):
                 entry = {'boxes': FINAL_BBOXES,
                          'labels': FINAL_LABELS, # here is the groundtruth
                          'scores': FINAL_SCORES,
-                         'im_idx': im_idx,
-                         'pair_idx': pair,
-                         'human_idx': HUMAN_IDX,
+                         'im_idx': im_idx + next_im_idx,
+                         'pair_idx': pair + prev_pair_idx,
+                         'human_idx': HUMAN_IDX + next_bbox_idx,
                          'features': FINAL_FEATURES,
                          'union_feat': union_feat,
                          'union_box': union_boxes,
