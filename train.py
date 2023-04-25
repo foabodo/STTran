@@ -227,8 +227,7 @@ for epoch in range(int(conf.nepoch)):
                     # here is the groundtruth
                     'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device)), 0),
                     'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device)), 0),
-                    'pair_idx': torch.cat(
-                        (entries['pair_idx'], entry['pair_idx'].to(sttran_device)), 0),
+                    'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device)), 0),
                     'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device)), 0),
                     'features': torch.cat((entries['features'], entry['features'].to(sttran_device)), 0),
                     'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device)), 0),
@@ -237,6 +236,7 @@ for epoch in range(int(conf.nepoch)):
                     'source_gt': entries['source_gt'] + entry['source_gt'],
                     'target_gt': entries['target_gt'] + entry['target_gt']
                 }
+                print(f"entries: {entries}")
         #     entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
         #
         # entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
