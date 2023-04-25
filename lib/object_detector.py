@@ -310,9 +310,11 @@ class detector(nn.Module):
 
             bbox_idx = 0
             for i, j in enumerate(gt_annotation):
+                print(f"i: {i}, j: {j}")
                 for m in j:
+                    print(f"m: {m}, keys: {tuple(m.keys())}")
                     if 'person_bbox' in m.keys():
-                        FINAL_BBOXES[bbox_idx,1:] = torch.from_numpy(m['person_bbox'][0])
+                        FINAL_BBOXES[bbox_idx, 1:] = torch.from_numpy(m['person_bbox'][0])
                         FINAL_BBOXES[bbox_idx, 0] = i
                         FINAL_LABELS[bbox_idx] = 1
                         HUMAN_IDX[i] = bbox_idx

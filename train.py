@@ -247,6 +247,12 @@ for epoch in range(int(conf.nepoch)):
             num_boxes = copy.deepcopy(data[3].to(object_detector_device))
             gt_annotation = dataset_test.gt_annotations[data[4]]
 
+            print(f"im_data: {im_data.size()}")
+            print(f"im_info: {im_info.size()}")
+            print(f"gt_boxes: {gt_boxes.size()}")
+            print(f"num_boxes: {num_boxes.size()}")
+            print(f"gt_annotation: {len(gt_annotation)}")
+
             entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
             entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
 
