@@ -90,7 +90,7 @@ class STTran(nn.Module):
         print(f"select_pair_idx: {select_pair_idx}")
 
         subj_rep = entry['features'][entry['pair_idx'][:, 0]]
-        print(f"subj_rep: {subj_rep.shape()}")
+        print(f"subj_rep: {subj_rep.size()}")
 
         subj_rep = self.subj_fc(subj_rep)
         obj_rep = entry['features'][entry['pair_idx'][:, 1]]
