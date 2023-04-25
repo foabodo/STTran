@@ -395,7 +395,7 @@ class detector(nn.Module):
 
             counter = 0
             start_index = 0
-            final_feature_index = 0
+            pair_start_idx = 0
 
             FINAL_FEATURES_LIST = []
 
@@ -409,6 +409,11 @@ class detector(nn.Module):
 
                 end_index = start_index + sum(len(anno) for anno in gt_annotation[counter:counter_limit])
                 print(f"[start_index:end_index]: [{start_index}:{end_index}]")
+
+                pair_end_idx = pair_start_idx + (end_index - start_index) - (counter_limit - counter)
+
+                print(f"pair_start_idx: {pair_start_idx} + (end_index - start_index): {(end_index - start_index)}"
+                      f" - (counter_limit - counter): {(counter_limit - counter)} = pair_end_idx: {pair_end_idx}")
 
                 inputs_data = im_data[counter:counter_limit]
                 print(f"[counter:counter_limit]: [{counter}:{counter_limit}]")
@@ -432,33 +437,33 @@ class detector(nn.Module):
                 # FINAL_FEATURES = torch.cat((FINAL_FEATURES, roi_align), 0)
 
                 if self.mode == 'predcls':
-                    # indexes = bboxes[start_index:end_index, 0]
-                    indexes = roi_boxes[:, 0]
-                    print(f"indexes: {indexes}")
-                    print(f"indexes: {indexes.size()}")
-
-                    index = torch.nonzero(torch.isin(indexes, im_idx), as_tuple=True)[0]
-                    print(f"index: {index}")
-                    # index = index[:, None]
+                    # # indexes = bboxes[start_index:end_index, 0]
+                    # indexes = roi_boxes[:, 0]
+                    # print(f"indexes: {indexes}")
+                    # print(f"indexes: {indexes.size()}")
+                    #
+                    # index = torch.nonzero(torch.isin(indexes, im_idx), as_tuple=True)[0]
                     # print(f"index: {index}")
-                    print(f"index: {index.size()}")
-
-                    print(f"pair: {pair.size()}")
-                    print(f"union_boxes: {union_boxes.size()}")
-                    print(f"union_feat: {union_feat.size()}")
+                    # # index = index[:, None]
+                    # # print(f"index: {index}")
+                    # print(f"index: {index.size()}")
+                    #
+                    # print(f"pair: {pair.size()}")
+                    # print(f"union_boxes: {union_boxes.size()}")
+                    # print(f"union_feat: {union_feat.size()}")
 
                     min_bboxes = bboxes[:, 1:3]
                     print(f"min_bboxes: [{min_bboxes.size()}]")
-                    min_pair_idx_0 = pair[index, 0]
+                    min_pair_idx_0 = pair[pair_start_idx:pair_end_idx, 0]
                     print(f"min_pair_idx_0: [{min_pair_idx_0}]")
-                    min_pair_idx_1 = pair[index, 1]
+                    min_pair_idx_1 = pair[pair_start_idx:pair_end_idx, 1]
                     print(f"min_pair_idx_1: [{min_pair_idx_1}]")
 
                     max_bboxes = bboxes[:, 3:5]
                     print(f"max_bboxes: [{max_bboxes.size()}]")
-                    max_pair_idx_0 = pair[index, 0]
+                    max_pair_idx_0 = pair[pair_start_idx:pair_end_idx, 0]
                     print(f"max_pair_idx_0: [{max_pair_idx_0}]")
-                    max_pair_idx_1 = pair[index, 1]
+                    max_pair_idx_1 = pair[pair_start_idx:pair_end_idx, 1]
                     print(f"max_pair_idx_1: [{max_pair_idx_1}]")
 
                     pair_min = torch.min(
@@ -472,13 +477,12 @@ class detector(nn.Module):
                         max_bboxes[max_pair_idx_1]
                     )
                     print(f"pair_max: [{pair_max.size()}]")
-                    print(f"index: {index.size()}")
-                    print(f"im_idx: {im_idx[index, None]}")
-                    print(f"im_idx: {im_idx[index, None].size()}")
+                    print(f"im_idx: {im_idx[pair_start_idx:pair_end_idx, None]}")
+                    print(f"im_idx: {im_idx[pair_start_idx:pair_end_idx, None].size()}")
 
                     union_box = torch.cat(
                         (
-                            im_idx[index, None],
+                            im_idx[pair_start_idx:pair_end_idx, None],
                             pair_min,
                             pair_max
                         ),
@@ -496,7 +500,7 @@ class detector(nn.Module):
 
                 start_index = end_index
 
-                final_feature_index += 1
+                pair_start_idx = pair_end_idx
             # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
             # print(f"FINAL_BASE_FEATURES_LIST: {len(FINAL_BASE_FEATURES_LIST)}")
             # print(f"FINAL_BASE_FEATURES_LIST: {sum([b.size()[0] for b in FINAL_BASE_FEATURES_LIST])}")
