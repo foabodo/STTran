@@ -170,13 +170,65 @@ for epoch in range(int(conf.nepoch)):
         # print(f"gt_boxes.shape: {gt_boxes.size()}")
         # print(f"num_boxes.shape: {num_boxes.size()}")
 
+        gt_annotation_lens = [len(anno) for anno in gt_annotation]
+        ranges = []
+        i = 0
+        start_index = 0
+        for i in range(1, len(gt_annotation) + 1):
+            if sum(gt_annotation_lens[start_index:i]) > 1536 or i == len(gt_annotation):
+                ranges.append((start_index, i))
+                start_index = i
+
+        print(f"ranges: {ranges}")
+
         # prevent gradients to FasterRCNN
         with torch.no_grad():
-            entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
+            entries = {
+                'boxes': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'labels': torch.tensor([], dtype=torch.int64).to(sttran_device),  # here is the groundtruth
+                'scores': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'im_idx': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'pair_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
+                'human_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
+                'features': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'union_feat': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'union_box': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'spatial_masks': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                'source_gt': [],
+                'target_gt': []
+            }
+            for i, j in ranges:
+                entry = object_detector(
+                    im_data[i: j].to(object_detector_device),
+                    im_info[i: j].to(object_detector_device),
+                    gt_boxes[i: j].to(object_detector_device),
+                    num_boxes[i: j].to(object_detector_device),
+                    gt_annotation[i: j],
+                    im_all=None,
+                    next_bbox_idx=len(entries['boxes']),
+                    next_im_idx=len(entries['im_idx'])
+                )
+                entries = {
+                    'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device)), 0),
+                    'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device)), 0),
+                    # here is the groundtruth
+                    'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device)), 0),
+                    'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device)), 0),
+                    'pair_idx': torch.cat(
+                        (entries['pair_idx'], entry['pair_idx'].to(sttran_device)), 0),
+                    'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device)), 0),
+                    'features': torch.cat((entries['features'], entry['features'].to(sttran_device)), 0),
+                    'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device)), 0),
+                    'union_box': torch.cat((entries['union_box'], entry['union_box'].to(sttran_device)), 0),
+                    'spatial_masks': torch.cat((entries['spatial_masks'], entry['spatial_masks'].to(sttran_device)), 0),
+                    'source_gt': entries['source_gt'] + entry['source_gt'],
+                    'target_gt': entries['target_gt'] + entry['target_gt']
+                }
+        #     entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
+        #
+        # entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
 
-        entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
-
-        pred = model(entry)
+        pred = model(entries)
 
         source_distribution = pred["source_distribution"]
         target_distribution = pred["target_distribution"]
