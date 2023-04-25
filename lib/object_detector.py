@@ -366,8 +366,7 @@ class detector(nn.Module):
             if self.mode == 'predcls':
                 print(f"next_im_idx: {next_im_idx}")
                 print(f"next_bbox_idx: {next_bbox_idx}")
-                print(f"next_im_idx: {next_im_idx}")
-                print(f"next_bbox_idx: {next_bbox_idx}")
+                print(f"prev_pair_idx: {prev_pair_idx}")
                 print(f"im_idx[:, None].size(): {im_idx[:, None].size()}")
                 print(f"im_idx[:, None][-1]: {im_idx[:, None][-1]}")
                 print(f"pair[:, 0].size(): {pair[:, 0].size()}")
