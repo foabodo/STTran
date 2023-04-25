@@ -386,7 +386,7 @@ class detector(nn.Module):
                         ),
                         torch.max(
                             FINAL_BBOXES[:, 3:5][pair[:, 0] - prev_pair_idx[0]],
-                            FINAL_BBOXES[:, 3:5][pair[:, 1] - prev_pair_idx1]
+                            FINAL_BBOXES[:, 3:5][pair[:, 1] - prev_pair_idx[1]]
                         )
                     ),
                     1

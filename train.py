@@ -207,7 +207,7 @@ for epoch in range(int(conf.nepoch)):
                     im_all=None,
                     next_bbox_idx=len(entries['boxes']),
                     next_im_idx=len(entries['im_idx']),
-                    prev_pair_idx=entries['pair_idx'][-1] if len(entries['pair_idx']) > 0 else None
+                    prev_pair_idx=entries['pair_idx'][-1] if len(entries['pair_idx']) > 0 else [0, 0]
                 )
                 entries = {
                     'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device)), 0),
