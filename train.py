@@ -206,7 +206,8 @@ for epoch in range(int(conf.nepoch)):
                     gt_annotation[i: j],
                     im_all=None,
                     next_bbox_idx=len(entries['boxes']),
-                    next_im_idx=len(entries['im_idx'])
+                    next_im_idx=len(entries['im_idx']),
+                    prev_pair_idx=entries['pair_idx'][-1]
                 )
                 entries = {
                     'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device)), 0),

@@ -66,7 +66,8 @@ class detector(nn.Module):
                 gt_annotation=None,
                 im_all=None,
                 next_bbox_idx=0,
-                next_im_idx=0):
+                next_im_idx=0,
+                prev_pair_idx=(0, 0)):
         if self.is_train:
             assert gt_boxes is not None
             assert num_boxes is not None
@@ -363,6 +364,10 @@ class detector(nn.Module):
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
 
             if self.mode == 'predcls':
+                print(f"next_im_idx: {next_im_idx}")
+                print(f"next_bbox_idx: {next_bbox_idx}")
+                print(f"next_im_idx: {next_im_idx}")
+                print(f"next_bbox_idx: {next_bbox_idx}")
                 print(f"im_idx[:, None].size(): {im_idx[:, None].size()}")
                 print(f"im_idx[:, None][-1]: {im_idx[:, None][-1]}")
                 print(f"pair[:, 0].size(): {pair[:, 0].size()}")
@@ -376,12 +381,12 @@ class detector(nn.Module):
                     (
                         im_idx[:, None],
                         torch.min(
-                            FINAL_BBOXES[:, 1:3][pair[:, 0] - next_im_idx],
-                            FINAL_BBOXES[:, 1:3][pair[:, 1] - next_im_idx]
+                            FINAL_BBOXES[:, 1:3][pair[:, 0] - prev_pair_idx[0]],
+                            FINAL_BBOXES[:, 1:3][pair[:, 1] - prev_pair_idx[1]]
                         ),
                         torch.max(
-                            FINAL_BBOXES[:, 3:5][pair[:, 0] - next_im_idx],
-                            FINAL_BBOXES[:, 3:5][pair[:, 1] - next_im_idx]
+                            FINAL_BBOXES[:, 3:5][pair[:, 0] - prev_pair_idx[0]],
+                            FINAL_BBOXES[:, 3:5][pair[:, 1] - prev_pair_idx1]
                         )
                     ),
                     1
