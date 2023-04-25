@@ -369,11 +369,23 @@ class detector(nn.Module):
                 print(f"pair[:, 0][-1]: {pair[:, 0][-1]}")
                 print(f"FINAL_BBOXES[:, 1:3].size(): {FINAL_BBOXES[:, 1:3].size()}")
                 print(f"FINAL_BBOXES[:, 1:3][-1]: {FINAL_BBOXES[:, 3:5][-1]}")
-                print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0]].size()}")
-                print(f"FINAL_BBOXES[:, 3:5][pair[:, 1]]: {FINAL_BBOXES[:, 3:5][pair[:, 1]].size()}")
+                print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0] - next_im_idx].size()}")
+                print(f"FINAL_BBOXES[:, 3:5][pair[:, 1]]: {FINAL_BBOXES[:, 3:5][pair[:, 1] - next_im_idx].size()}")
 
-                union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
-                                         torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])), 1)
+                union_boxes = torch.cat(
+                    (
+                        im_idx[:, None],
+                        torch.min(
+                            FINAL_BBOXES[:, 1:3][pair[:, 0] - next_im_idx],
+                            FINAL_BBOXES[:, 1:3][pair[:, 1] - next_im_idx]
+                        ),
+                        torch.max(
+                            FINAL_BBOXES[:, 3:5][pair[:, 0] - next_im_idx],
+                            FINAL_BBOXES[:, 3:5][pair[:, 1] - next_im_idx]
+                        )
+                    ),
+                    1
+                )
                 print(f"union_boxes: {union_boxes.size()}")
 
                 union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
