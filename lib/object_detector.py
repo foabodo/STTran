@@ -374,8 +374,8 @@ class detector(nn.Module):
                 print(f"pair[:, 0][-1]: {pair[:, 0][-1]}")
                 print(f"FINAL_BBOXES[:, 1:3].size(): {FINAL_BBOXES[:, 1:3].size()}")
                 print(f"FINAL_BBOXES[:, 1:3][-1]: {FINAL_BBOXES[:, 3:5][-1]}")
-                print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0] - next_im_idx].size()}")
-                print(f"FINAL_BBOXES[:, 3:5][pair[:, 1]]: {FINAL_BBOXES[:, 3:5][pair[:, 1] - next_im_idx].size()}")
+                print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0] - prev_pair_idx[0]].size()}")
+                print(f"FINAL_BBOXES[:, 3:5][pair[:, 1]]: {FINAL_BBOXES[:, 3:5][pair[:, 1] - prev_pair_idx[1]].size()}")
 
                 union_boxes = torch.cat(
                     (
