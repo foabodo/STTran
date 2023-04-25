@@ -363,9 +363,18 @@ class detector(nn.Module):
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
 
             if self.mode == 'predcls':
+                print(f"im_idx[:, None]: {im_idx[:, None].size()}")
+                print(f"pair[:, 0]: {pair[:, 0].size()}")
+                print(f"pair[:, 1]: {pair[:, 1].size()}")
+                print(f"FINAL_BBOXES[:, 1:3]: {FINAL_BBOXES[:, 1:3].size()}")
+                print(f"FINAL_BBOXES[:, 3:5]: {FINAL_BBOXES[:, 3:5].size()}")
+                print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0]].size()}")
+                print(f"FINAL_BBOXES[:, 3:5][pair[:, 1]]: {FINAL_BBOXES[:, 3:5][pair[:, 1]].size()}")
+
                 union_boxes = torch.cat((im_idx[:, None], torch.min(FINAL_BBOXES[:, 1:3][pair[:, 0]], FINAL_BBOXES[:, 1:3][pair[:, 1]]),
                                          torch.max(FINAL_BBOXES[:, 3:5][pair[:, 0]], FINAL_BBOXES[:, 3:5][pair[:, 1]])), 1)
                 print(f"union_boxes: {union_boxes.size()}")
+
                 union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
                 print(f"union_feat: {union_feat.size()}")
 
