@@ -70,6 +70,12 @@ class detector(nn.Module):
             assert num_boxes is not None
             assert gt_annotation is not None
 
+        print(f"im_data: {im_data.size()}")
+        print(f"im_info: {im_info.size()}")
+        print(f"gt_boxes: {gt_boxes.size()}")
+        print(f"num_boxes: {num_boxes.size()}")
+        print(f"gt_annotation: {len(gt_annotation)}")
+
         if self.mode == 'sgdet':
             counter = 0
             counter_image = 0
