@@ -366,7 +366,7 @@ class detector(nn.Module):
                 print(f"im_idx[:, None].size(): {im_idx[:, None].size()}")
                 print(f"im_idx[:, None][-1]: {im_idx[:, None][-1]}")
                 print(f"pair[:, 0].size(): {pair[:, 0].size()}")
-                print(f"pair[:, 0][-1]: {pair[:, 0][-1].size()}")
+                print(f"pair[:, 0][-1]: {pair[:, 0][-1]}")
                 print(f"FINAL_BBOXES[:, 1:3].size(): {FINAL_BBOXES[:, 1:3].size()}")
                 print(f"FINAL_BBOXES[:, 1:3][-1]: {FINAL_BBOXES[:, 3:5][-1]}")
                 print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0]].size()}")
