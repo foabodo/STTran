@@ -198,6 +198,19 @@ for epoch in range(int(conf.nepoch)):
                 'target_gt': []
             }
             for i, j in ranges:
+                print(f"entries['boxes']: {entries['boxes']}")
+                print(f"entries['boxes'].size(): {entries['boxes'].size()}")
+                print(f"entries['im_idx']: {entries['im_idx']}")
+                print(f"entries['im_idx'].size(): {entries['im_idx'].size()}")
+                print(f"entries['pair_idx']: {entries['pair_idx']}")
+                print(f"entries['pair_idx'].size(): {entries['pair_idx'].size()}")
+                print(f"entries['human_idx']: {entries['human_idx']}")
+                print(f"entries['human_idx'].size(): {entries['human_idx'].size()}")
+                # print(f"entries['boxes']: {entries['boxes']}")
+                # print(f"entries['boxes'].size(): {entries['boxes'].size()}")
+                # print(f"entries['boxes']: {entries['boxes']}")
+                # print(f"entries['boxes'].size(): {entries['boxes'].size()}")
+                
                 entry = object_detector(
                     im_data[i: j].to(object_detector_device),
                     im_info[i: j].to(object_detector_device),
