@@ -363,11 +363,12 @@ class detector(nn.Module):
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
 
             if self.mode == 'predcls':
-                print(f"im_idx[:, None]: {im_idx[:, None].size()}")
-                print(f"pair[:, 0]: {pair[:, 0].size()}")
-                print(f"pair[:, 1]: {pair[:, 1].size()}")
-                print(f"FINAL_BBOXES[:, 1:3]: {FINAL_BBOXES[:, 1:3].size()}")
-                print(f"FINAL_BBOXES[:, 3:5]: {FINAL_BBOXES[:, 3:5].size()}")
+                print(f"im_idx[:, None].size(): {im_idx[:, None].size()}")
+                print(f"im_idx[:, None][-1]: {im_idx[:, None][-1]}")
+                print(f"pair[:, 0].size(): {pair[:, 0].size()}")
+                print(f"pair[:, 0][-1]: {pair[:, 0][-1].size()}")
+                print(f"FINAL_BBOXES[:, 1:3].size(): {FINAL_BBOXES[:, 1:3].size()}")
+                print(f"FINAL_BBOXES[:, 1:3][-1]: {FINAL_BBOXES[:, 3:5][-1]}")
                 print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0]].size()}")
                 print(f"FINAL_BBOXES[:, 3:5][pair[:, 1]]: {FINAL_BBOXES[:, 3:5][pair[:, 1]].size()}")
 
