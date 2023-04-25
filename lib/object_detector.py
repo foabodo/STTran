@@ -75,6 +75,7 @@ class detector(nn.Module):
         print(f"gt_boxes: {gt_boxes.size()}")
         print(f"num_boxes: {num_boxes.size()}")
         print(f"gt_annotation: {len(gt_annotation)}")
+        print(f"gt_annotation: {[len(anno) for anno in gt_annotation]}")
 
         if self.mode == 'sgdet':
             counter = 0
