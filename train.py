@@ -198,19 +198,6 @@ for epoch in range(int(conf.nepoch)):
                 'target_gt': []
             }
             for i, j in ranges:
-                print(f"entries['boxes']: {entries['boxes']}")
-                print(f"entries['boxes'].size(): {entries['boxes'].size()}")
-                print(f"entries['im_idx']: {entries['im_idx']}")
-                print(f"entries['im_idx'].size(): {entries['im_idx'].size()}")
-                print(f"entries['pair_idx']: {entries['pair_idx']}")
-                print(f"entries['pair_idx'].size(): {entries['pair_idx'].size()}")
-                print(f"entries['human_idx']: {entries['human_idx']}")
-                print(f"entries['human_idx'].size(): {entries['human_idx'].size()}")
-                # print(f"entries['boxes']: {entries['boxes']}")
-                # print(f"entries['boxes'].size(): {entries['boxes'].size()}")
-                # print(f"entries['boxes']: {entries['boxes']}")
-                # print(f"entries['boxes'].size(): {entries['boxes'].size()}")
-                
                 entry = object_detector(
                     im_data[i: j].to(object_detector_device),
                     im_info[i: j].to(object_detector_device),
@@ -236,7 +223,20 @@ for epoch in range(int(conf.nepoch)):
                     'source_gt': entries['source_gt'] + entry['source_gt'],
                     'target_gt': entries['target_gt'] + entry['target_gt']
                 }
-                print(f"entries: {entries}")
+                print(f"entries['boxes']: {entries['boxes']}")
+                print(f"entries['boxes'].size(): {entries['boxes'].size()}")
+                print(f"entries['im_idx']: {entries['im_idx']}")
+                print(f"entries['im_idx'].size(): {entries['im_idx'].size()}")
+                print(f"entries['pair_idx']: {entries['pair_idx']}")
+                print(f"entries['pair_idx'].size(): {entries['pair_idx'].size()}")
+                print(f"entries['human_idx']: {entries['human_idx']}")
+                print(f"entries['human_idx'].size(): {entries['human_idx'].size()}")
+                # print(f"entries['boxes']: {entries['boxes']}")
+                # print(f"entries['boxes'].size(): {entries['boxes'].size()}")
+                # print(f"entries['boxes']: {entries['boxes']}")
+                # print(f"entries['boxes'].size(): {entries['boxes'].size()}")
+
+                # print(f"entries: {entries}")
         #     entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
         #
         # entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
