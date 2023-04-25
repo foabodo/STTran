@@ -325,7 +325,7 @@ class detector(nn.Module):
                         FINAL_BBOXES[bbox_idx - next_bbox_idx, 1:] = torch.from_numpy(m['person_bbox'][0])
                         FINAL_BBOXES[bbox_idx - next_bbox_idx, 0] = i
                         FINAL_LABELS[bbox_idx - next_bbox_idx] = 1
-                        HUMAN_IDX[i] = bbox_idx
+                        HUMAN_IDX[i] = bbox_idx - next_bbox_idx
                         bbox_idx += 1
                     else:
                         FINAL_BBOXES[bbox_idx - next_bbox_idx, 1:] = torch.from_numpy(m['bbox'])
