@@ -175,7 +175,7 @@ for epoch in range(int(conf.nepoch)):
         i = 0
         start_index = 0
         for i in range(1, len(gt_annotation) + 1):
-            if sum(gt_annotation_lens[start_index:i]) > 1536 or i == len(gt_annotation):
+            if sum(gt_annotation_lens[start_index:i]) > 256 or i == len(gt_annotation):
                 ranges.append((start_index, i))
                 start_index = i
 
