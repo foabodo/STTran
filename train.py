@@ -156,203 +156,174 @@ for epoch in range(int(conf.nepoch)):
         print(f"GT_ANNOTATION_LEN: {num_gt_annotations}")
         print(f"GT_ANNOTATION_LEN: {len(gt_annotation)}")
 
-        # # we can't fit too many bboxes in GPU ram at the same time
-        # if num_gt_annotations >= 3625:
-        #     continue
+        if len(gt_annotation) >= 2400 and num_gt_annotations >= 6000:
+            im_data = copy.deepcopy(data[0]).to(object_detector_device)
+            im_info = copy.deepcopy(data[1]).to(object_detector_device)
+            gt_boxes = copy.deepcopy(data[2]).to(object_detector_device)
+            num_boxes = copy.deepcopy(data[3]).to(object_detector_device)
 
-        im_data = copy.deepcopy(data[0]).to(object_detector_device)
-        im_info = copy.deepcopy(data[1]).to(object_detector_device)
-        gt_boxes = copy.deepcopy(data[2]).to(object_detector_device)
-        num_boxes = copy.deepcopy(data[3]).to(object_detector_device)
+            # we can't fit too many bboxes in GPU ram at the same time
+            gt_annotation_lens = [len(anno) for anno in gt_annotation]
+            ranges = []
+            i = 0
+            start_index = 0
+            for i in range(1, len(gt_annotation) + 1):
+                if sum(gt_annotation_lens[start_index:i]) > 1536 or i == len(gt_annotation):
+                    ranges.append((start_index, i))
+                    start_index = i
 
-        # print(f"im_data.shape: {im_data.size()}")
-        # print(f"im_info.shape: {im_info.size()}")
-        # print(f"gt_boxes.shape: {gt_boxes.size()}")
-        # print(f"num_boxes.shape: {num_boxes.size()}")
+            print(f"ranges: {ranges}")
 
-        gt_annotation_lens = [len(anno) for anno in gt_annotation]
-        ranges = []
-        i = 0
-        start_index = 0
-        for i in range(1, len(gt_annotation) + 1):
-            if sum(gt_annotation_lens[start_index:i]) > 1536 or i == len(gt_annotation):
-                ranges.append((start_index, i))
-                start_index = i
-
-        print(f"ranges: {ranges}")
-
-        # prevent gradients to FasterRCNN
-        with torch.no_grad():
-            entries = {
-                'boxes': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'labels': torch.tensor([], dtype=torch.int64).to(sttran_device),  # here is the groundtruth
-                'scores': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'im_idx': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'pair_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
-                'human_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
-                'features': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'union_feat': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'union_box': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'spatial_masks': torch.tensor([], dtype=torch.float32).to(sttran_device),
-                'source_gt': [],
-                'target_gt': []
-            }
-            for i, j in ranges:
-                entry = object_detector(
-                    im_data[i: j].to(object_detector_device),
-                    im_info[i: j].to(object_detector_device),
-                    gt_boxes[i: j].to(object_detector_device),
-                    num_boxes[i: j].to(object_detector_device),
-                    gt_annotation[i: j],
-                    im_all=None,
-                    next_bbox_idx=len(entries['boxes']),
-                    next_im_idx=len(entries['im_idx']),
-                    prev_pair_idx=entries['pair_idx'][-1][None, :].to(object_detector_device)
-                    if len(entries['pair_idx']) > 0 else torch.tensor([[0, 0]]).to(object_detector_device)
-                )
+            # prevent gradients to FasterRCNN
+            with torch.no_grad():
                 entries = {
-                    'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device)), 0),
-                    'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device)), 0),
-                    # here is the groundtruth
-                    'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device)), 0),
-                    'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device)), 0),
-                    'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device)), 0),
-                    'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device)), 0),
-                    'features': torch.cat((entries['features'], entry['features'].to(sttran_device)), 0),
-                    'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device)), 0),
-                    'union_box': torch.cat((entries['union_box'], entry['union_box'].to(sttran_device)), 0),
-                    'spatial_masks': torch.cat((entries['spatial_masks'], entry['spatial_masks'].to(sttran_device)), 0),
-                    'source_gt': entries['source_gt'] + entry['source_gt'],
-                    'target_gt': entries['target_gt'] + entry['target_gt']
+                    'boxes': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                    'labels': torch.tensor([], dtype=torch.int64).to(sttran_device),  # here is the groundtruth
+                    'scores': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                    'im_idx': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                    'pair_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
+                    'human_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
+                    'features': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                    'union_feat': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                    'union_box': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                    'spatial_masks': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                    'source_gt': [],
+                    'target_gt': []
                 }
-                print(f"entries['boxes']: {entries['boxes']}")
-                print(f"entries['boxes'].size(): {entries['boxes'].size()}")
-                print(f"entries['im_idx']: {entries['im_idx']}")
-                print(f"entries['im_idx'].size(): {entries['im_idx'].size()}")
-                print(f"entries['pair_idx']: {entries['pair_idx']}")
-                print(f"entries['pair_idx'].size(): {entries['pair_idx'].size()}")
-                print(f"entries['human_idx']: {entries['human_idx']}")
-                print(f"entries['human_idx'].size(): {entries['human_idx'].size()}")
-                # print(f"entries['boxes']: {entries['boxes']}")
-                # print(f"entries['boxes'].size(): {entries['boxes'].size()}")
-                # print(f"entries['boxes']: {entries['boxes']}")
-                # print(f"entries['boxes'].size(): {entries['boxes'].size()}")
+                for i, j in ranges:
+                    entry = object_detector(
+                        im_data[i: j].to(object_detector_device),
+                        im_info[i: j].to(object_detector_device),
+                        gt_boxes[i: j].to(object_detector_device),
+                        num_boxes[i: j].to(object_detector_device),
+                        gt_annotation[i: j],
+                        im_all=None,
+                        next_bbox_idx=len(entries['boxes']),
+                        next_im_idx=len(entries['im_idx']),
+                        prev_pair_idx=entries['pair_idx'][-1][None, :].to(object_detector_device)
+                        if len(entries['pair_idx']) > 0 else torch.tensor([[0, 0]]).to(object_detector_device)
+                    )
+                    entries = {
+                        'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device)), 0),
+                        'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device)), 0),
+                        # here is the groundtruth
+                        'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device)), 0),
+                        'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device)), 0),
+                        'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device)), 0),
+                        'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device)), 0),
+                        'features': torch.cat((entries['features'], entry['features'].to(sttran_device)), 0),
+                        'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device)), 0),
+                        'union_box': torch.cat((entries['union_box'], entry['union_box'].to(sttran_device)), 0),
+                        'spatial_masks': torch.cat((entries['spatial_masks'], entry['spatial_masks'].to(sttran_device)), 0),
+                        'source_gt': entries['source_gt'] + entry['source_gt'],
+                        'target_gt': entries['target_gt'] + entry['target_gt']
+                    }
+                    print(f"entries['boxes'].size(): {entries['boxes'].size()}")
+                    print(f"entries['im_idx'].size(): {entries['im_idx'].size()}")
+                    print(f"entries['pair_idx'].size(): {entries['pair_idx'].size()}")
+                    print(f"entries['human_idx'].size(): {entries['human_idx'].size()}")
 
-                # print(f"entries: {entries}")
-        #     entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
-        #
-        # entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
+            pred = model(entries)
 
-        pred = model(entries)
-
-        source_distribution = pred["source_distribution"]
-        target_distribution = pred["target_distribution"]
-
-        if not conf.bce_loss:
-            # multi-label margin loss or adaptive loss
-            source_label = -torch.ones([len(pred["source_gt"]), dataset_train.num_source_relationships], dtype=torch.long).to(device=source_distribution.device)
-            target_label = -torch.ones([len(pred["target_gt"]), dataset_train.num_target_relationships], dtype=torch.long).to(device=source_distribution.device)
-
-            for i in range(len(pred["source_gt"])):
-                source_label[i, : len(pred["source_gt"][i])] = torch.tensor(pred["source_gt"][i])
-                target_label[i, : len(pred["target_gt"][i])] = torch.tensor(pred["target_gt"][i])
-
-        else:
-            # bce loss
-            # TODO: what are these magic numbers?
-            source_label = torch.zeros([len(pred["source_gt"]), dataset_train.num_source_relationships], dtype=torch.float32).to(device=source_distribution.device)
-            target_label = torch.zeros([len(pred["target_gt"]), dataset_train.num_target_relationships], dtype=torch.float32).to(device=source_distribution.device)
-
-            for i in range(len(pred["source_gt"])):
-                source_label[i, pred["source_gt"][i]] = 1
-                target_label[i, pred["target_gt"][i]] = 1
-
-        losses = {}
-        if conf.mode == 'sgcls' or conf.mode == 'sgdet':
-            losses['object_loss'] = ce_loss(pred['distribution'], pred['labels'])
-
-        if not conf.bce_loss:
-            losses["source_relation_loss"] = mlm_loss(source_distribution, source_label)
-            losses["target_relation_loss"] = mlm_loss(target_distribution, target_label)
-
-        else:
-            losses["source_relation_loss"] = bce_loss(source_distribution, source_label)
-            losses["target_relation_loss"] = bce_loss(target_distribution, target_label)
-
-        optimizer.zero_grad()
-        loss = sum(losses.values())
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5, norm_type=2)
-        optimizer.step()
-
-        tr.append(pd.Series({x: y.item() for x, y in losses.items()}))
-
-        if b % 1000 == 0 and b >= 1000:
-            time_per_batch = (time.time() - start) / 1000
-            print("\ne{:2d}  b{:5d}/{:5d}  {:.3f}s/batch, {:.1f}m/epoch".format(epoch, b, len(dataloader_train),
-                                                                                time_per_batch, len(dataloader_train) * time_per_batch / 60))
-
-            mn = pd.concat(tr[-1000:], axis=1).mean(1)
-            print(mn)
-            start = time.time()
-
-    torch.save({"state_dict": model.state_dict()}, os.path.join(conf.save_path, "model_{}.tar".format(epoch)))
-    print("*" * 40)
-    print("save the checkpoint after {} epochs".format(epoch))
-
-    model.eval()
-    object_detector.is_train = False
-    with torch.no_grad():
-        for b in range(len(dataloader_test)):
-        # for b in range(2):
-            print(f"Fetching test data {b}")
-            data = next(test_iter)
-
-            im_data = copy.deepcopy(data[0].to(object_detector_device))
-            im_info = copy.deepcopy(data[1].to(object_detector_device))
-            gt_boxes = copy.deepcopy(data[2].to(object_detector_device))
-            num_boxes = copy.deepcopy(data[3].to(object_detector_device))
-            gt_annotation = dataset_test.gt_annotations[data[4]]
-
-            print(f"im_data: {im_data.size()}")
-            print(f"im_info: {im_info.size()}")
-            print(f"gt_boxes: {gt_boxes.size()}")
-            print(f"num_boxes: {num_boxes.size()}")
-            print(f"gt_annotation: {len(gt_annotation)}")
-
-            entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
-            entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
-
-            # Try to avoid GPU OOM
-            im_data.to(cpu_device)
-            im_info.to(cpu_device)
-            gt_boxes.to(cpu_device)
-            num_boxes.to(cpu_device)
-
-            del im_data
-            del im_info
-            del gt_boxes
-            del num_boxes
+            del entries
 
             torch.cuda.empty_cache()
 
-            pred = model(entry)
+            source_distribution = pred["source_distribution"]
+            target_distribution = pred["target_distribution"]
 
-            del entry
+            if not conf.bce_loss:
+                # multi-label margin loss or adaptive loss
+                source_label = -torch.ones([len(pred["source_gt"]), dataset_train.num_source_relationships], dtype=torch.long).to(device=source_distribution.device)
+                target_label = -torch.ones([len(pred["target_gt"]), dataset_train.num_target_relationships], dtype=torch.long).to(device=source_distribution.device)
 
-            torch.cuda.empty_cache()
+                for i in range(len(pred["source_gt"])):
+                    source_label[i, : len(pred["source_gt"][i])] = torch.tensor(pred["source_gt"][i])
+                    target_label[i, : len(pred["target_gt"][i])] = torch.tensor(pred["target_gt"][i])
 
-            evaluator.evaluate_scene_graph(gt_annotation, pred)
+            else:
+                # bce loss
+                # TODO: what are these magic numbers?
+                source_label = torch.zeros([len(pred["source_gt"]), dataset_train.num_source_relationships], dtype=torch.float32).to(device=source_distribution.device)
+                target_label = torch.zeros([len(pred["target_gt"]), dataset_train.num_target_relationships], dtype=torch.float32).to(device=source_distribution.device)
 
-        del pred
+                for i in range(len(pred["source_gt"])):
+                    source_label[i, pred["source_gt"][i]] = 1
+                    target_label[i, pred["target_gt"][i]] = 1
 
-        torch.cuda.empty_cache()
-            
-        print('-----------', flush=True)
-    score = np.mean(evaluator.result_dict[conf.mode + "_recall"][20])
-    evaluator.print_stats()
-    evaluator.reset_result()
-    scheduler.step(score)
+            losses = {}
+            if conf.mode == 'sgcls' or conf.mode == 'sgdet':
+                losses['object_loss'] = ce_loss(pred['distribution'], pred['labels'])
+
+            if not conf.bce_loss:
+                losses["source_relation_loss"] = mlm_loss(source_distribution, source_label)
+                losses["target_relation_loss"] = mlm_loss(target_distribution, target_label)
+
+            else:
+                losses["source_relation_loss"] = bce_loss(source_distribution, source_label)
+                losses["target_relation_loss"] = bce_loss(target_distribution, target_label)
+
+            optimizer.zero_grad()
+            loss = sum(losses.values())
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5, norm_type=2)
+            optimizer.step()
+
+            tr.append(pd.Series({x: y.item() for x, y in losses.items()}))
+
+            if b % 10 == 0:# and b >= 1000:
+                time_per_batch = (time.time() - start) / 1000
+                print("\ne{:2d}  b{:5d}/{:5d}  {:.3f}s/batch, {:.1f}m/epoch".format(epoch, b, len(dataloader_train),
+                                                                                    time_per_batch, len(dataloader_train) * time_per_batch / 60))
+
+                mn = pd.concat(tr[-1000:], axis=1).mean(1)
+                print(mn)
+                start = time.time()
+
+                torch.save({"state_dict": model.state_dict()}, os.path.join(conf.save_path, "model_{}_{}.tar".format(epoch, b)))
+                print("*" * 40)
+                print("save the checkpoint after {} epochs, {} steps".format(epoch, b))
+
+                model.eval()
+                object_detector.is_train = False
+                with torch.no_grad():
+                    for b_eval in range(len(dataloader_test)):
+                    # for b in range(2):
+                        print(f"Fetching test data {b_eval}")
+                        data_eval = next(test_iter)
+
+                        im_data_eval = copy.deepcopy(data_eval[0].to(object_detector_device))
+                        im_info_eval = copy.deepcopy(data_eval[1].to(object_detector_device))
+                        gt_boxes_eval = copy.deepcopy(data_eval[2].to(object_detector_device))
+                        num_boxes_eval = copy.deepcopy(data_eval[3].to(object_detector_device))
+                        gt_annotation_eval = dataset_test.gt_annotations[data_eval[4]]
+
+                        print(f"im_data_eval: {im_data_eval.size()}")
+                        print(f"im_info_eval: {im_info_eval.size()}")
+                        print(f"gt_boxes_eval: {gt_boxes_eval.size()}")
+                        print(f"num_boxes_eval: {num_boxes_eval.size()}")
+                        print(f"gt_annotation_eval: {len(gt_annotation_eval)}")
+
+                        entry_eval = object_detector(im_data_eval, im_info_eval, gt_boxes_eval, num_boxes_eval, gt_annotation_eval, im_all=None)
+                        entry_eval = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry_eval.items()}
+
+                        pred_eval = model(entry_eval)
+
+                        del entry_eval
+
+                        torch.cuda.empty_cache()
+
+                        evaluator.evaluate_scene_graph(gt_annotation_eval, pred_eval)
+                    #
+                    # del pred
+                    #
+                    # torch.cuda.empty_cache()
+
+                    print('-----------', flush=True)
+                score = np.mean(evaluator.result_dict[conf.mode + "_recall"][20])
+                evaluator.print_stats()
+                evaluator.reset_result()
+                scheduler.step(score)
 
 
 

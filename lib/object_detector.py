@@ -404,7 +404,7 @@ class detector(nn.Module):
                 entry = {'boxes': FINAL_BBOXES,
                          'labels': FINAL_LABELS, # here is the groundtruth
                          'scores': FINAL_SCORES,
-                         'im_idx': im_idx + next_im_idx,
+                         'im_idx': im_idx + next_im_idx,  # add offsets to support chunking of data on small GPUs
                          'pair_idx': pair + prev_pair_idx,
                          'human_idx': HUMAN_IDX + next_bbox_idx,
                          'features': FINAL_FEATURES,
