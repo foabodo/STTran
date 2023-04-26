@@ -304,7 +304,17 @@ for epoch in range(int(conf.nepoch)):
                         print(f"num_boxes_eval: {num_boxes_eval.size()}")
                         print(f"gt_annotation_eval: {len(gt_annotation_eval)}")
 
-                        entry_eval = object_detector(im_data_eval, im_info_eval, gt_boxes_eval, num_boxes_eval, gt_annotation_eval, im_all=None)
+                        entry_eval = object_detector(
+                            im_data_eval,
+                            im_info_eval,
+                            gt_boxes_eval,
+                            num_boxes_eval,
+                            gt_annotation_eval,
+                            im_all=None,
+                            next_bbox_idx=0,
+                            next_im_idx=0,
+                            prev_pair_idx=torch.tensor([[0, 0]]).to(object_detector_device)
+                        )
                         entry_eval = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry_eval.items()}
 
                         pred_eval = model(entry_eval)

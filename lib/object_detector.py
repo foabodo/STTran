@@ -58,16 +58,18 @@ class detector(nn.Module):
         self.ROI_Align = copy.deepcopy(self.fasterRCNN.RCNN_roi_align)
         self.RCNN_Head = copy.deepcopy(self.fasterRCNN._head_to_tail)
 
-    def forward(self,
-                im_data,
-                im_info,
-                gt_boxes=None,
-                num_boxes=None,
-                gt_annotation=None,
-                im_all=None,
-                next_bbox_idx=0,
-                next_im_idx=0,
-                prev_pair_idx=(0, 0)):
+    def forward(
+            self,
+            im_data,
+            im_info,
+            gt_boxes=None,
+            num_boxes=None,
+            gt_annotation=None,
+            im_all=None,
+            next_bbox_idx=0,
+            next_im_idx=0,
+            prev_pair_idx=torch.tensor([[0, 0]])
+    ):
         if self.is_train:
             assert gt_boxes is not None
             assert num_boxes is not None
@@ -364,6 +366,7 @@ class detector(nn.Module):
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
 
             if self.mode == 'predcls':
+                prev_pair_idx.to(self.device)
                 print(f"next_im_idx: {next_im_idx}")
                 print(f"next_bbox_idx: {next_bbox_idx}")
                 print(f"prev_pair_idx.size(): {prev_pair_idx.size()}")
