@@ -153,8 +153,8 @@ for epoch in range(int(conf.nepoch)):
         gt_annotation = dataset_train.gt_annotations[data[4]]
         num_gt_annotations = sum([len(anno) for anno in gt_annotation])
 
-        print(f"GT_ANNOTATION_LEN: {num_gt_annotations}")
-        print(f"GT_ANNOTATION_LEN: {len(gt_annotation)}")
+        print(f"TRAIN_GT_ANNOTATION_LEN: {len(gt_annotation)}")
+        print(f"TRAIN_GT_BBOX_LEN: {num_gt_annotations}")
 
         if len(gt_annotation) <= 2700 and num_gt_annotations <= 5600:
             im_data = copy.deepcopy(data[0]).to(object_detector_device)
@@ -291,39 +291,75 @@ for epoch in range(int(conf.nepoch)):
                     # for b in range(2):
                         print(f"Fetching test data {b_eval}")
                         data_eval = next(test_iter)
-
-                        im_data_eval = copy.deepcopy(data_eval[0].to(object_detector_device))
-                        im_info_eval = copy.deepcopy(data_eval[1].to(object_detector_device))
-                        gt_boxes_eval = copy.deepcopy(data_eval[2].to(object_detector_device))
-                        num_boxes_eval = copy.deepcopy(data_eval[3].to(object_detector_device))
+                    
                         gt_annotation_eval = dataset_test.gt_annotations[data_eval[4]]
-
-                        print(f"im_data_eval: {im_data_eval.size()}")
-                        print(f"im_info_eval: {im_info_eval.size()}")
-                        print(f"gt_boxes_eval: {gt_boxes_eval.size()}")
-                        print(f"num_boxes_eval: {num_boxes_eval.size()}")
-                        print(f"gt_annotation_eval: {len(gt_annotation_eval)}")
-
-                        entry_eval = object_detector(
-                            im_data_eval,
-                            im_info_eval,
-                            gt_boxes_eval,
-                            num_boxes_eval,
-                            gt_annotation_eval,
-                            im_all=None,
-                            next_bbox_idx=0,
-                            next_im_idx=0,
-                            prev_pair_idx=torch.tensor([[0, 0]]).to(object_detector_device)
-                        )
-                        entry_eval = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry_eval.items()}
-
-                        pred_eval = model(entry_eval)
-
-                        del entry_eval
-
-                        torch.cuda.empty_cache()
-
-                        evaluator.evaluate_scene_graph(gt_annotation_eval, pred_eval)
+                        num_gt_annotations_eval = sum([len(anno) for anno in gt_annotation_eval])
+                
+                        print(f"EVAL_GT_ANNOTATION_LEN: {len(gt_annotation_eval)}")
+                        print(f"EVAL_GT_BBOX_LEN: {num_gt_annotations_eval}")
+                
+                        if len(gt_annotation_eval) <= 2700 and num_gt_annotations_eval <= 5600:
+                            im_data_eval = copy.deepcopy(data_eval[0].to(object_detector_device))
+                            im_info_eval = copy.deepcopy(data_eval[1].to(object_detector_device))
+                            gt_boxes_eval = copy.deepcopy(data_eval[2].to(object_detector_device))
+                            num_boxes_eval = copy.deepcopy(data_eval[3].to(object_detector_device))
+                            gt_annotation_eval = dataset_test.gt_annotations[data_eval[4]]
+    
+                            print(f"im_data_eval: {im_data_eval.size()}")
+                            print(f"im_info_eval: {im_info_eval.size()}")
+                            print(f"gt_boxes_eval: {gt_boxes_eval.size()}")
+                            print(f"num_boxes_eval: {num_boxes_eval.size()}")
+                            print(f"gt_annotation_eval: {len(gt_annotation_eval)}")
+                            
+                            entries_eval = {
+                                'boxes': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                                'labels': torch.tensor([], dtype=torch.int64).to(sttran_device),  # here is the groundtruth
+                                'scores': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                                'im_idx': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                                'pair_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
+                                'human_idx': torch.tensor([], dtype=torch.int64).to(sttran_device),
+                                'features': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                                'union_feat': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                                'union_box': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                                'spatial_masks': torch.tensor([], dtype=torch.float32).to(sttran_device),
+                                'source_gt': [],
+                                'target_gt': []
+                            }
+                            for i, j in ranges:
+                                entry_eval = object_detector(
+                                    im_data_eval[i: j].to(object_detector_device),
+                                    im_info_eval[i: j].to(object_detector_device),
+                                    gt_boxes_eval[i: j].to(object_detector_device),
+                                    num_boxes_eval[i: j].to(object_detector_device),
+                                    gt_annotation_eval[i: j],
+                                    im_all=None,
+                                    next_bbox_idx=0,
+                                    next_im_idx=0,
+                                    prev_pair_idx=torch.tensor([[0, 0]]).to(object_detector_device)
+                                )
+                                entries_eval = {
+                                    'boxes': torch.cat((entries_eval['boxes'], entry_eval['boxes'].to(sttran_device)), 0),
+                                    'labels': torch.cat((entries_eval['labels'], entry_eval['labels'].to(sttran_device)), 0),
+                                    # here is the groundtruth
+                                    'scores': torch.cat((entries_eval['scores'], entry_eval['scores'].to(sttran_device)), 0),
+                                    'im_idx': torch.cat((entries_eval['im_idx'], entry_eval['im_idx'].to(sttran_device)), 0),
+                                    'pair_idx': torch.cat((entries_eval['pair_idx'], entry_eval['pair_idx'].to(sttran_device)), 0),
+                                    'human_idx': torch.cat((entries_eval['human_idx'], entry_eval['human_idx'].to(sttran_device)), 0),
+                                    'features': torch.cat((entries_eval['features'], entry_eval['features'].to(sttran_device)), 0),
+                                    'union_feat': torch.cat((entries_eval['union_feat'], entry_eval['union_feat'].to(sttran_device)), 0),
+                                    'union_box': torch.cat((entries_eval['union_box'], entry_eval['union_box'].to(sttran_device)), 0),
+                                    'spatial_masks': torch.cat((entries_eval['spatial_masks'], entry_eval['spatial_masks'].to(sttran_device)), 0),
+                                    'source_gt': entries_eval['source_gt'] + entry_eval['source_gt'],
+                                    'target_gt': entries_eval['target_gt'] + entry_eval['target_gt']
+                                }
+                                
+                            pred_eval = model(entries_eval)
+    
+                            del entries_eval
+    
+                            torch.cuda.empty_cache()
+    
+                            evaluator.evaluate_scene_graph(gt_annotation_eval, pred_eval)
                     #
                     # del pred
                     #
