@@ -156,7 +156,7 @@ for epoch in range(int(conf.nepoch)):
         print(f"GT_ANNOTATION_LEN: {num_gt_annotations}")
         print(f"GT_ANNOTATION_LEN: {len(gt_annotation)}")
 
-        if 2700 >= len(gt_annotation) >= 2250 and num_gt_annotations >= 5000:
+        if len(gt_annotation) <= 2700 and num_gt_annotations <= 5600:
             im_data = copy.deepcopy(data[0]).to(object_detector_device)
             im_info = copy.deepcopy(data[1]).to(object_detector_device)
             gt_boxes = copy.deepcopy(data[2]).to(object_detector_device)
