@@ -62,7 +62,7 @@ dataset_test = Dataset(
 dataloader_test = torch.utils.data.DataLoader(
     dataset_test,
     shuffle=False,
-    num_workers=1,
+    num_workers=2,
     collate_fn=cuda_collate_fn,
     pin_memory=False)
 
@@ -142,6 +142,7 @@ tr = []
 for epoch in range(int(conf.nepoch)):
     model.train()
     object_detector.is_train = True
+
     start = time.time()
     train_iter = iter(dataloader_train)
     test_iter = iter(dataloader_test)
@@ -286,6 +287,7 @@ for epoch in range(int(conf.nepoch)):
 
                 model.eval()
                 object_detector.is_train = False
+
                 with torch.no_grad():
                     for b_eval in range(len(dataloader_test)):
                     # for b in range(2):
@@ -370,6 +372,10 @@ for epoch in range(int(conf.nepoch)):
                 evaluator.print_stats()
                 evaluator.reset_result()
                 scheduler.step(score)
+
+                model.train()
+                object_detector.is_train = True
+
 
 
 
