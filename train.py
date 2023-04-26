@@ -62,7 +62,7 @@ dataset_test = Dataset(
 dataloader_test = torch.utils.data.DataLoader(
     dataset_test,
     shuffle=False,
-    num_workers=2,
+    num_workers=1,
     collate_fn=cuda_collate_fn,
     pin_memory=False)
 
