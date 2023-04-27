@@ -51,21 +51,6 @@ dataloader_train = torch.utils.data.DataLoader(
     collate_fn=cuda_collate_fn,
     pin_memory=False)
 
-dataset_test = Dataset(
-    mode="test",
-    datasize=conf.datasize,
-    data_path=conf.data_path,
-    filter_nonperson_box_frame=True,
-    filter_small_box=False if conf.mode == 'predcls' else True,
-    config_path=conf.config_path)
-
-dataloader_test = torch.utils.data.DataLoader(
-    dataset_test,
-    shuffle=False,
-    num_workers=2,
-    collate_fn=cuda_collate_fn,
-    pin_memory=False)
-
 cpu_device = torch.device("cpu")
 sttran_device = torch.device("cuda:1")
 object_detector_device = torch.device("cuda:0")
@@ -145,7 +130,6 @@ for epoch in range(int(conf.nepoch)):
 
     start = time.time()
     train_iter = iter(dataloader_train)
-    test_iter = iter(dataloader_test)
     
     for b in range(len(dataloader_train)):
         print(f"Fetching train data {b}")
@@ -285,12 +269,29 @@ for epoch in range(int(conf.nepoch)):
                 print("*" * 40)
                 print("save the checkpoint after {} epochs, {} steps".format(epoch, b))
 
+                # evaluate
                 model.eval()
                 object_detector.is_train = False
 
+                dataset_test = Dataset(
+                    mode="test",
+                    datasize=conf.datasize,
+                    data_path=conf.data_path,
+                    filter_nonperson_box_frame=True,
+                    filter_small_box=False if conf.mode == 'predcls' else True,
+                    config_path=conf.config_path)
+
+                dataloader_test = torch.utils.data.DataLoader(
+                    dataset_test,
+                    shuffle=False,
+                    num_workers=2,
+                    collate_fn=cuda_collate_fn,
+                    pin_memory=False)
+
+                test_iter = iter(dataloader_test)
+
                 with torch.no_grad():
                     for b_eval in range(len(dataloader_test)):
-                    # for b in range(2):
                         print(f"Fetching test data {b_eval}")
                         data_eval = next(test_iter)
                     
