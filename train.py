@@ -361,7 +361,7 @@ for epoch in range(int(conf.nepoch)):
     
                             evaluator.evaluate_scene_graph(gt_annotation_eval, pred_eval)
 
-                            del pred
+                            del pred_eval
 
                             torch.cuda.empty_cache()
 
