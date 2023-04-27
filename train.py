@@ -157,7 +157,7 @@ for epoch in range(int(conf.nepoch)):
         print(f"TRAIN_GT_ANNOTATION_LEN: {len(gt_annotation)}")
         print(f"TRAIN_GT_BBOX_LEN: {num_gt_annotations}")
 
-        if len(gt_annotation) <= 2700 and num_gt_annotations <= 5600:
+        if 0 < len(gt_annotation) <= 2700 and 0 < num_gt_annotations <= 5600:
             im_data = copy.deepcopy(data[0]).to(object_detector_device)
             im_info = copy.deepcopy(data[1]).to(object_detector_device)
             gt_boxes = copy.deepcopy(data[2]).to(object_detector_device)
@@ -300,7 +300,7 @@ for epoch in range(int(conf.nepoch)):
                         print(f"EVAL_GT_ANNOTATION_LEN: {len(gt_annotation_eval)}")
                         print(f"EVAL_GT_BBOX_LEN: {num_gt_annotations_eval}")
                 
-                        if len(gt_annotation_eval) <= 2700 and num_gt_annotations_eval <= 5600:
+                        if 0 < len(gt_annotation_eval) <= 2700 and 0 < num_gt_annotations_eval <= 5600:
                             im_data_eval = copy.deepcopy(data_eval[0].to(object_detector_device))
                             im_info_eval = copy.deepcopy(data_eval[1].to(object_detector_device))
                             gt_boxes_eval = copy.deepcopy(data_eval[2].to(object_detector_device))
@@ -359,13 +359,11 @@ for epoch in range(int(conf.nepoch)):
     
                             del entries_eval
     
-                            torch.cuda.empty_cache()
-    
                             evaluator.evaluate_scene_graph(gt_annotation_eval, pred_eval)
-                    #
-                    # del pred
-                    #
-                    # torch.cuda.empty_cache()
+
+                            del pred
+
+                            torch.cuda.empty_cache()
 
                     print('-----------', flush=True)
                 score = np.mean(evaluator.result_dict[conf.mode + "_recall"][20])
