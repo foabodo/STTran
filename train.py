@@ -176,37 +176,38 @@ for epoch in range(int(conf.nepoch)):
                     'target_gt': []
                 }
                 for i, j in ranges:
-                    entry = object_detector(
-                        im_data[i: j].to(object_detector_device),
-                        im_info[i: j].to(object_detector_device),
-                        gt_boxes[i: j].to(object_detector_device),
-                        num_boxes[i: j].to(object_detector_device),
-                        gt_annotation[i: j],
-                        im_all=None,
-                        next_bbox_idx=len(entries['boxes']),
-                        next_im_idx=len(entries['im_idx']),
-                        prev_pair_idx=entries['pair_idx'][-1][None, :].to(object_detector_device)
-                        if len(entries['pair_idx']) > 0 else torch.tensor([[0, 0]]).to(object_detector_device)
-                    )
-                    entries = {
-                        'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device)), 0),
-                        'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device)), 0),
-                        # here is the groundtruth
-                        'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device)), 0),
-                        'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device)), 0),
-                        'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device)), 0),
-                        'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device)), 0),
-                        'features': torch.cat((entries['features'], entry['features'].to(sttran_device)), 0),
-                        'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device)), 0),
-                        'union_box': torch.cat((entries['union_box'], entry['union_box'].to(sttran_device)), 0),
-                        'spatial_masks': torch.cat((entries['spatial_masks'], entry['spatial_masks'].to(sttran_device)), 0),
-                        'source_gt': entries['source_gt'] + entry['source_gt'],
-                        'target_gt': entries['target_gt'] + entry['target_gt']
-                    }
-                    print(f"entries['boxes'].size(): {entries['boxes'].size()}")
-                    print(f"entries['im_idx'].size(): {entries['im_idx'].size()}")
-                    print(f"entries['pair_idx'].size(): {entries['pair_idx'].size()}")
-                    print(f"entries['human_idx'].size(): {entries['human_idx'].size()}")
+                    if len(gt_annotation[i: j]) > 0:
+                        entry = object_detector(
+                            im_data[i: j].to(object_detector_device),
+                            im_info[i: j].to(object_detector_device),
+                            gt_boxes[i: j].to(object_detector_device),
+                            num_boxes[i: j].to(object_detector_device),
+                            gt_annotation[i: j],
+                            im_all=None,
+                            next_bbox_idx=len(entries['boxes']),
+                            next_im_idx=len(entries['im_idx']),
+                            prev_pair_idx=entries['pair_idx'][-1][None, :].to(object_detector_device)
+                            if len(entries['pair_idx']) > 0 else torch.tensor([[0, 0]]).to(object_detector_device)
+                        )
+                        entries = {
+                            'boxes': torch.cat((entries['boxes'], entry['boxes'].to(sttran_device)), 0),
+                            'labels': torch.cat((entries['labels'], entry['labels'].to(sttran_device)), 0),
+                            # here is the groundtruth
+                            'scores': torch.cat((entries['scores'], entry['scores'].to(sttran_device)), 0),
+                            'im_idx': torch.cat((entries['im_idx'], entry['im_idx'].to(sttran_device)), 0),
+                            'pair_idx': torch.cat((entries['pair_idx'], entry['pair_idx'].to(sttran_device)), 0),
+                            'human_idx': torch.cat((entries['human_idx'], entry['human_idx'].to(sttran_device)), 0),
+                            'features': torch.cat((entries['features'], entry['features'].to(sttran_device)), 0),
+                            'union_feat': torch.cat((entries['union_feat'], entry['union_feat'].to(sttran_device)), 0),
+                            'union_box': torch.cat((entries['union_box'], entry['union_box'].to(sttran_device)), 0),
+                            'spatial_masks': torch.cat((entries['spatial_masks'], entry['spatial_masks'].to(sttran_device)), 0),
+                            'source_gt': entries['source_gt'] + entry['source_gt'],
+                            'target_gt': entries['target_gt'] + entry['target_gt']
+                        }
+                        print(f"entries['boxes'].size(): {entries['boxes'].size()}")
+                        print(f"entries['im_idx'].size(): {entries['im_idx'].size()}")
+                        print(f"entries['pair_idx'].size(): {entries['pair_idx'].size()}")
+                        print(f"entries['human_idx'].size(): {entries['human_idx'].size()}")
 
             pred = model(entries)
 
@@ -329,32 +330,33 @@ for epoch in range(int(conf.nepoch)):
                                 'target_gt': []
                             }
                             for i, j in ranges:
-                                entry_eval = object_detector(
-                                    im_data_eval[i: j].to(object_detector_device),
-                                    im_info_eval[i: j].to(object_detector_device),
-                                    gt_boxes_eval[i: j].to(object_detector_device),
-                                    num_boxes_eval[i: j].to(object_detector_device),
-                                    gt_annotation_eval[i: j],
-                                    im_all=None,
-                                    next_bbox_idx=0,
-                                    next_im_idx=0,
-                                    prev_pair_idx=torch.tensor([[0, 0]]).to(object_detector_device)
-                                )
-                                entries_eval = {
-                                    'boxes': torch.cat((entries_eval['boxes'], entry_eval['boxes'].to(sttran_device)), 0),
-                                    'labels': torch.cat((entries_eval['labels'], entry_eval['labels'].to(sttran_device)), 0),
-                                    # here is the groundtruth
-                                    'scores': torch.cat((entries_eval['scores'], entry_eval['scores'].to(sttran_device)), 0),
-                                    'im_idx': torch.cat((entries_eval['im_idx'], entry_eval['im_idx'].to(sttran_device)), 0),
-                                    'pair_idx': torch.cat((entries_eval['pair_idx'], entry_eval['pair_idx'].to(sttran_device)), 0),
-                                    'human_idx': torch.cat((entries_eval['human_idx'], entry_eval['human_idx'].to(sttran_device)), 0),
-                                    'features': torch.cat((entries_eval['features'], entry_eval['features'].to(sttran_device)), 0),
-                                    'union_feat': torch.cat((entries_eval['union_feat'], entry_eval['union_feat'].to(sttran_device)), 0),
-                                    'union_box': torch.cat((entries_eval['union_box'], entry_eval['union_box'].to(sttran_device)), 0),
-                                    'spatial_masks': torch.cat((entries_eval['spatial_masks'], entry_eval['spatial_masks'].to(sttran_device)), 0),
-                                    'source_gt': entries_eval['source_gt'] + entry_eval['source_gt'],
-                                    'target_gt': entries_eval['target_gt'] + entry_eval['target_gt']
-                                }
+                                if len(gt_annotation_eval[i: j]) > 0:
+                                    entry_eval = object_detector(
+                                        im_data_eval[i: j].to(object_detector_device),
+                                        im_info_eval[i: j].to(object_detector_device),
+                                        gt_boxes_eval[i: j].to(object_detector_device),
+                                        num_boxes_eval[i: j].to(object_detector_device),
+                                        gt_annotation_eval[i: j],
+                                        im_all=None,
+                                        next_bbox_idx=0,
+                                        next_im_idx=0,
+                                        prev_pair_idx=torch.tensor([[0, 0]]).to(object_detector_device)
+                                    )
+                                    entries_eval = {
+                                        'boxes': torch.cat((entries_eval['boxes'], entry_eval['boxes'].to(sttran_device)), 0),
+                                        'labels': torch.cat((entries_eval['labels'], entry_eval['labels'].to(sttran_device)), 0),
+                                        # here is the groundtruth
+                                        'scores': torch.cat((entries_eval['scores'], entry_eval['scores'].to(sttran_device)), 0),
+                                        'im_idx': torch.cat((entries_eval['im_idx'], entry_eval['im_idx'].to(sttran_device)), 0),
+                                        'pair_idx': torch.cat((entries_eval['pair_idx'], entry_eval['pair_idx'].to(sttran_device)), 0),
+                                        'human_idx': torch.cat((entries_eval['human_idx'], entry_eval['human_idx'].to(sttran_device)), 0),
+                                        'features': torch.cat((entries_eval['features'], entry_eval['features'].to(sttran_device)), 0),
+                                        'union_feat': torch.cat((entries_eval['union_feat'], entry_eval['union_feat'].to(sttran_device)), 0),
+                                        'union_box': torch.cat((entries_eval['union_box'], entry_eval['union_box'].to(sttran_device)), 0),
+                                        'spatial_masks': torch.cat((entries_eval['spatial_masks'], entry_eval['spatial_masks'].to(sttran_device)), 0),
+                                        'source_gt': entries_eval['source_gt'] + entry_eval['source_gt'],
+                                        'target_gt': entries_eval['target_gt'] + entry_eval['target_gt']
+                                    }
                                 
                             pred_eval = model(entries_eval)
     
