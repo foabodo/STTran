@@ -33,7 +33,6 @@ class detector(nn.Module):
         self.mode = mode
         self.device = torch.device("cuda:0") if device is None else device
         self.batch_size = batch_size
-        self.cpu_device = torch.device("cpu")
 
         self.fasterRCNN = resnet(
             classes=self.object_classes,
@@ -58,29 +57,17 @@ class detector(nn.Module):
         self.ROI_Align = copy.deepcopy(self.fasterRCNN.RCNN_roi_align)
         self.RCNN_Head = copy.deepcopy(self.fasterRCNN._head_to_tail)
 
-    def forward(
-            self,
-            im_data,
-            im_info,
-            gt_boxes=None,
-            num_boxes=None,
-            gt_annotation=None,
-            im_all=None,
-            next_bbox_idx=0,
-            next_im_idx=0,
-            prev_pair_idx=torch.tensor([[0, 0]])
-    ):
+    def forward(self,
+                im_data,
+                im_info,
+                gt_boxes=None,
+                num_boxes=None,
+                gt_annotation=None,
+                im_all=None):
         if self.is_train:
             assert gt_boxes is not None
             assert num_boxes is not None
             assert gt_annotation is not None
-
-        print(f"im_data: {im_data.size()}")
-        print(f"im_info: {im_info.size()}")
-        print(f"gt_boxes: {gt_boxes.size()}")
-        print(f"num_boxes: {num_boxes.size()}")
-        print(f"gt_annotation: {len(gt_annotation)}")
-        print(f"gt_annotation: {[len(anno) for anno in gt_annotation]}")
 
         if self.mode == 'sgdet':
             counter = 0
@@ -320,33 +307,30 @@ class detector(nn.Module):
             FINAL_SCORES = torch.ones([bbox_num], dtype=torch.float32).to(self.device)
             HUMAN_IDX = torch.zeros([len(gt_annotation),1], dtype=torch.int64).to(self.device)
 
-            bbox_idx = next_bbox_idx
+            bbox_idx = 0
             for i, j in enumerate(gt_annotation):
                 for m in j:
                     if 'person_bbox' in m.keys():
-                        FINAL_BBOXES[bbox_idx - next_bbox_idx, 1:] = torch.from_numpy(m['person_bbox'][0])
-                        FINAL_BBOXES[bbox_idx - next_bbox_idx, 0] = i
-                        FINAL_LABELS[bbox_idx - next_bbox_idx] = 1
-                        HUMAN_IDX[i] = bbox_idx - next_bbox_idx
+                        FINAL_BBOXES[bbox_idx,1:] = torch.from_numpy(m['person_bbox'][0])
+                        FINAL_BBOXES[bbox_idx, 0] = i
+                        FINAL_LABELS[bbox_idx] = 1
+                        HUMAN_IDX[i] = bbox_idx
                         bbox_idx += 1
                     else:
-                        FINAL_BBOXES[bbox_idx - next_bbox_idx, 1:] = torch.from_numpy(m['bbox'])
-                        FINAL_BBOXES[bbox_idx - next_bbox_idx, 0] = i
-                        FINAL_LABELS[bbox_idx - next_bbox_idx] = m['class']
+                        FINAL_BBOXES[bbox_idx,1:] = torch.from_numpy(m['bbox'])
+                        FINAL_BBOXES[bbox_idx, 0] = i
+                        FINAL_LABELS[bbox_idx] = m['class']
                         im_idx.append(i)
-                        pair.append([int(HUMAN_IDX[i]), bbox_idx - next_bbox_idx])
+                        pair.append([int(HUMAN_IDX[i]), bbox_idx])
                         s_rel.append(m['source_relationship'].tolist())
                         t_rel.append(m['target_relationship'].tolist())
                         bbox_idx += 1
             pair = torch.tensor(pair).to(self.device)
-            f"constructed_pair: {pair}"
-            f"constructed_pair: {pair.size()}"
             im_idx = torch.tensor(im_idx, dtype=torch.float).to(self.device)
-            f"constructed_im_idx: {im_idx}"
-            f"constructed_im_idx: {im_idx.size()}"
 
             counter = 0
             FINAL_BASE_FEATURES = torch.tensor([]).to(self.device)
+            # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             while counter < im_data.shape[0]:
                 #compute 10 images in batch and  collect all frames data in the video
@@ -354,31 +338,18 @@ class detector(nn.Module):
                     inputs_data = im_data[counter:counter + self.batch_size]
                 else:
                     inputs_data = im_data[counter:]
-
+                # print(f"RCNN_base_inputs_data: {inputs_data.size()}")
                 base_feat = self.fasterRCNN.RCNN_base(inputs_data)
+                # print(f"RCNN_base_feat: {base_feat.size()}")
                 FINAL_BASE_FEATURES = torch.cat((FINAL_BASE_FEATURES, base_feat), 0)
+                # print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
                 counter += self.batch_size
-            print(f"FINAL_BASE_FEATURES: {FINAL_BASE_FEATURES.size()}")
 
             FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] * im_info[0, 2]
-            print(f"FINAL_BBOXES: {FINAL_BBOXES.size()}")
             FINAL_FEATURES = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, FINAL_BBOXES)
             FINAL_FEATURES = self.fasterRCNN._head_to_tail(FINAL_FEATURES)
 
             if self.mode == 'predcls':
-                prev_pair_idx.to(self.device)
-                print(f"next_im_idx: {next_im_idx}")
-                print(f"next_bbox_idx: {next_bbox_idx}")
-                print(f"prev_pair_idx.size(): {prev_pair_idx.size()}")
-                print(f"prev_pair_idx: {prev_pair_idx}")
-                print(f"im_idx[:, None].size(): {im_idx[:, None].size()}")
-                print(f"im_idx[:, None][-1]: {im_idx[:, None][-1]}")
-                print(f"pair[:, 0].size(): {pair[:, 0].size()}")
-                print(f"pair[:, 0][-1] - prev_pair_idx[0]: {pair[:, 0][-1]}")
-                print(f"FINAL_BBOXES[:, 1:3].size(): {FINAL_BBOXES[:, 1:3].size()}")
-                print(f"FINAL_BBOXES[:, 1:3][-1]: {FINAL_BBOXES[:, 3:5][-1]}")
-                print(f"FINAL_BBOXES[:, 1:3][pair[:, 0]]: {FINAL_BBOXES[:, 1:3][pair[:, 0]].size()}")
-                print(f"FINAL_BBOXES[:, 3:5][pair[:, 1]]: {FINAL_BBOXES[:, 3:5][pair[:, 1]].size()}")
 
                 union_boxes = torch.cat(
                     (
@@ -394,11 +365,7 @@ class detector(nn.Module):
                     ),
                     1
                 )
-                print(f"union_boxes: {union_boxes.size()}")
-
                 union_feat = self.fasterRCNN.RCNN_roi_align(FINAL_BASE_FEATURES, union_boxes)
-                print(f"union_feat: {union_feat.size()}")
-
                 FINAL_BBOXES[:, 1:] = FINAL_BBOXES[:, 1:] / im_info[0, 2]
                 pair_rois = torch.cat((FINAL_BBOXES[pair[:, 0], 1:], FINAL_BBOXES[pair[:, 1], 1:]),
                                       1).data.cpu().numpy()
@@ -407,9 +374,9 @@ class detector(nn.Module):
                 entry = {'boxes': FINAL_BBOXES,
                          'labels': FINAL_LABELS, # here is the groundtruth
                          'scores': FINAL_SCORES,
-                         'im_idx': im_idx + next_im_idx,  # add offsets to support chunking of data on small GPUs
-                         'pair_idx': pair + prev_pair_idx,
-                         'human_idx': HUMAN_IDX + next_bbox_idx,
+                         'im_idx': im_idx,
+                         'pair_idx': pair,
+                         'human_idx': HUMAN_IDX,
                          'features': FINAL_FEATURES,
                          'union_feat': union_feat,
                          'union_box': union_boxes,
