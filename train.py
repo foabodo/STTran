@@ -19,7 +19,7 @@ from lib.AdamW import AdamW
 from lib.sttran import STTran
 
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 
 """------------------------------------some settings----------------------------------------"""
@@ -67,8 +67,7 @@ dataloader_test = torch.utils.data.DataLoader(
     pin_memory=False)
 
 cpu_device = torch.device("cpu")
-sttran_device = torch.device("cuda:1")
-object_detector_device = torch.device("cuda:0")
+gpu_device = torch.device("cuda:0")
 # freeze the detection backbone
 
 # Prepare a partial mapping
@@ -90,9 +89,9 @@ object_detector = detector(
     mode=conf.mode,
     state_dict=state_dict,
     ignore_missing_keys=True,
-    device=object_detector_device,
+    device=gpu_device,
     batch_size=yaml_config["batch_size"]
-).to(device=object_detector_device)
+).to(device=gpu_device)
 
 object_detector.eval()
 
@@ -105,8 +104,8 @@ model = STTran(
     dec_layer_num=conf.dec_layer,
     word_vec_dir=yaml_config["word_vec_dir"],
     word_vec_dim=yaml_config["word_vec_dim"],
-    device=sttran_device
-).to(device=sttran_device)
+    device=gpu_device
+).to(device=gpu_device)
 
 evaluator = BasicSceneGraphEvaluator(
     mode=conf.mode,
@@ -152,16 +151,16 @@ for epoch in range(int(conf.nepoch)):
         print(f"Fetching train data {b}")
         data = next(train_iter)
 
-        im_data = copy.deepcopy(data[0].to(object_detector_device))
-        im_info = copy.deepcopy(data[1].to(object_detector_device))
-        gt_boxes = copy.deepcopy(data[2].to(object_detector_device))
-        num_boxes = copy.deepcopy(data[3].to(object_detector_device))
+        im_data = copy.deepcopy(data[0].to(gpu_device))
+        im_info = copy.deepcopy(data[1].to(gpu_device))
+        gt_boxes = copy.deepcopy(data[2].to(gpu_device))
+        num_boxes = copy.deepcopy(data[3].to(gpu_device))
         gt_annotation = dataset_train.gt_annotations[data[4]]
 
         # prevent gradients to FasterRCNN
         with torch.no_grad():
             entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
-            entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
+            entry = {k: v.to(gpu_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
 
         # Try to avoid GPU OOM
         im_data.to(cpu_device)
@@ -245,14 +244,14 @@ for epoch in range(int(conf.nepoch)):
             print(f"Fetching test data {b}")
             data = next(test_iter)
 
-            im_data = copy.deepcopy(data[0].to(object_detector_device))
-            im_info = copy.deepcopy(data[1].to(object_detector_device))
-            gt_boxes = copy.deepcopy(data[2].to(object_detector_device))
-            num_boxes = copy.deepcopy(data[3].to(object_detector_device))
+            im_data = copy.deepcopy(data[0].to(gpu_device))
+            im_info = copy.deepcopy(data[1].to(gpu_device))
+            gt_boxes = copy.deepcopy(data[2].to(gpu_device))
+            num_boxes = copy.deepcopy(data[3].to(gpu_device))
             gt_annotation = dataset_test.gt_annotations[data[4]]
 
             entry = object_detector(im_data, im_info, gt_boxes, num_boxes, gt_annotation, im_all=None)
-            entry = {k: v.to(sttran_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
+            entry = {k: v.to(gpu_device) if isinstance(v, torch.Tensor) else v for k, v in entry.items()}
 
             # Try to avoid GPU OOM
             im_data.to(cpu_device)
